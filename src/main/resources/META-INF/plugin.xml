@@ -1,27 +1,43 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>fish.crafting.FIMPlugin</id>
 
-    <!-- Public plugin name should be written in Title Case.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>Fish's Integrated Minecraft</name>
 
-    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor url="https://youtube.crafting.fish">ACraftingFish</vendor>
 
-    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description>Fully custom Minecraft development integration</description>
+    <description><![CDATA[
+        <h1>Fish's Integrated Minecraft</h1>
 
-    <!-- Product and plugin compatibility requirements.
-         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+        <p>Fish's Integrated Minecraft (FIM for short) is a <b>Minecraft-to-IntelliJ</b> integration that aims to eliminate tedious tasks when coding.</p>
+
+        <h2>Installation</h2>
+
+        <p>To use FIM, you must also download our Minecraft Mod.</p>
+        <p>FIM runs on <a href="https://fabricmc.net/">Fabric</a>, and is built to support <b>latest</b> versions of Minecraft only.</p>
+        <p>Download the Fabric Mod from our repository's releases or from <a href="https://modrinth.com/mod/fish-integrated-minecraft">Modrinth</a>. </p>
+
+        <h2>Bugs & Suggestions</h2>
+
+        <p>To report bugs or give suggestions, join us at our <a href="https://discord.crafting.fish">Discord Server</a>!</p>
+
+        <h2>Main Features</h2>
+
+        <li>Fast Vector/Location accessing & editing</li>
+        <li>Shortcut for quick swapping between IntelliJ & Minecraft</li>
+        </ul>]]>
+    </description>
+
+    <change-notes><![CDATA[
+      <ul>
+        First public alpha version of FIM!
+      </ul>
+    ]]>
+    </change-notes>
+
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.java</depends>
     <depends>org.jetbrains.kotlin</depends>
 
-    <!-- Extension points defined by the plugin.
-         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.lineMarkerProvider language="JAVA"
                                         implementationClass="fish.crafting.fimplugin.plugin.marker.VectorLineMarkerProvider"/>
