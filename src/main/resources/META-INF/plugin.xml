@@ -1,0 +1,68 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>fish.crafting.FIMPlugin</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Fish's Integrated Minecraft</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://youtube.crafting.fish">ACraftingFish</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description>Fully custom Minecraft development integration</description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.VectorLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.VectorLineMarkerProvider"/>
+
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.LocationLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.LocationLineMarkerProvider"/>
+
+
+        <postStartupActivity implementation = "fish.crafting.fimplugin.plugin.listener.ProjectOpenListener"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK2="true" />
+    </extensions>
+
+    <actions>
+        <group id="fim.vector_group" class="fish.crafting.fimplugin.plugin.group.VectorActionGroup" text="Vector Actions"/>
+        <group id="fim.location_group" class="fish.crafting.fimplugin.plugin.group.LocationActionGroup" text="Vector Actions"/>
+
+        <action id="fim.tp_vec" class="fish.crafting.fimplugin.plugin.action.vector.VectorTeleportAction"
+                text="Teleport to Vector">
+            <add-to-group group-id="fim.vector_group" anchor="first"/>
+        </action>
+
+        <action id="fim.move_vec" class="fish.crafting.fimplugin.plugin.action.vector.VectorMoveAction"
+                text="Move Vector">
+            <add-to-group group-id="fim.vector_group" anchor="first"/>
+        </action>
+
+        <action id="fim.tp_loc" class="fish.crafting.fimplugin.plugin.action.location.LocationTeleportAction"
+                text="Teleport to Location">
+            <add-to-group group-id="fim.location_group" anchor="first"/>
+        </action>
+
+        <action id="fim.move_loc" class="fish.crafting.fimplugin.plugin.action.location.LocationMoveAction"
+                text="Move Location">
+            <add-to-group group-id="fim.location_group" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
