@@ -66,7 +66,7 @@ public class X11Impl {
                 Xlib x11 = new Xlib();
 
                 Class<?> XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
-                x11.unsafe = (Unsafe) ReflectionUtil.getUnsafe();
+                x11.unsafe = (Unsafe) X11Impl.unsafe;
                 x11.XGetWindowProperty = method(XlibWrapper, "XGetWindowProperty", 12);
                 x11.XFree = method(XlibWrapper, "XFree", 1);
                 x11.RootWindow = method(XlibWrapper, "RootWindow", 2);
