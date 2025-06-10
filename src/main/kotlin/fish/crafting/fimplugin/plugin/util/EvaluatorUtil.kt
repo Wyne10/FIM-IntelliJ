@@ -83,8 +83,8 @@ object EvaluatorUtil {
                     args[1].double(),
                     args[2].double(),
                     args[3].double(),
+                    args[5].double().toFloat(), //Cuz it goes yaw and then pitch in the bukkit location
                     args[4].double().toFloat(),
-                    args[5].double().toFloat(),
                     args[0].stringOrNull() ?: ""
                 )
             }
