@@ -30,6 +30,7 @@
     <change-notes><![CDATA[
       <ul>
         First public alpha version of FIM!
+        <li>Fixed internal API issues</li>
       </ul>
     ]]>
     </change-notes>
