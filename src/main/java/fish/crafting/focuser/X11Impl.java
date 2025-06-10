@@ -1,4 +1,4 @@
-package fish.crafting.fimplugin.connection.focuser.impl;
+package fish.crafting.focuser;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ReflectionUtil;
