@@ -1,11 +1,11 @@
 package fish.crafting.fimplugin.connection.focuser.impl
 
+import com.sun.jna.Callback
 import com.sun.jna.Native
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.win32.StdCallLibrary
 import com.sun.jna.win32.W32APIOptions
-import javax.security.auth.callback.Callback
 
 interface KtUser32Impl : StdCallLibrary {
     companion object{
