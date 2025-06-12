@@ -4,7 +4,7 @@ Fish's Integrated Minecraft (FIM for short) is a **Minecraft-to-IntelliJ** integ
 
 ## 🔨 FIM-IntelliJ
 
-This repository is the **IntelliJ part** of the project only. For more information about the tool, please visit the [Minecraft Repository]()
+This repository is the **IntelliJ part** of the project only. For more information about the tool, please visit the [FIM Minecraft Repository](https://github.com/FishIntegratedMinecraft/FIM-Fabric)
 
 ## 📃 License
 
