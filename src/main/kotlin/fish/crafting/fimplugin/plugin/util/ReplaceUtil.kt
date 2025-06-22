@@ -60,11 +60,16 @@ object ReplaceUtil {
         WriteCommandAction.runWriteCommandAction(source.project) {
             val args = callExpr.valueArguments
 
-            addOrModify(callExpr, args, 1, x.toString(), doublePredicate(x))
-            addOrModify(callExpr, args, 2, y.toString(), doublePredicate(y))
-            addOrModify(callExpr, args, 3, z.toString(), doublePredicate(z))
-            addOrModify(callExpr, args, 4, yaw.toString() + "f", doublePredicate(yaw.toDouble()))
-            addOrModify(callExpr, args, 5, pitch.toString() + "f", doublePredicate(pitch.toDouble()))
+            //Janky implementation, but it should work!
+            val noWorldParam = args.size == 3 || args.size == 5 //Minestom
+
+            var index = if(noWorldParam) 0 else 1
+
+            addOrModify(callExpr, args, index++, x.toString(), doublePredicate(x))
+            addOrModify(callExpr, args, index++, y.toString(), doublePredicate(y))
+            addOrModify(callExpr, args, index++, z.toString(), doublePredicate(z))
+            addOrModify(callExpr, args, index++, yaw.toString() + "f", doublePredicate(yaw.toDouble()))
+            addOrModify(callExpr, args, index, pitch.toString() + "f", doublePredicate(pitch.toDouble()))
         }
     }
 

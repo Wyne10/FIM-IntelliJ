@@ -8,10 +8,12 @@ import org.jetbrains.uast.toUElementOfType
 object MatcherUtil {
 
     private val VECTOR_CLASSPATHS = setOf(
-        "org.bukkit.util.Vector"
+        "org.bukkit.util.Vector",
+        "net.minestom.server.coordinate.Vec"
     )
     private val LOCATION_CLASSPATHS = setOf(
-        "org.bukkit.Location"
+        "org.bukkit.Location",
+        "net.minestom.server.coordinate.Pos"
     )
 
     fun matchPsiToVector(element: PsiElement): Boolean {
