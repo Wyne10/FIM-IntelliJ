@@ -1,5 +1,7 @@
 package fish.crafting.fimplugin.plugin.listener
 
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import fish.crafting.fimplugin.connection.netty.ConnectionManager
@@ -16,5 +18,10 @@ class ProjectOpenListener : ProjectActivity {
         TimerService.getInstance()
         FocusDisposable.getInstance(project)
         PacketManager //Just to make sure it initializes, although it's not necessary
+
+        project.messageBus.connect().subscribe(
+            FileEditorManagerListener.FILE_EDITOR_MANAGER,
+            FileChangedListener
+        )
     }
 }

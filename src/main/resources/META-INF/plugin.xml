@@ -29,8 +29,8 @@
 
     <change-notes><![CDATA[
       <ul>
-        First public alpha version of FIM!
-        <li>Fixed internal API issues</li>
+        <li>Added support for Minestom (Pos & Vec)</li>
+        <li>Added automatic language switching, based on latest open file</li>
       </ul>
     ]]>
     </change-notes>
