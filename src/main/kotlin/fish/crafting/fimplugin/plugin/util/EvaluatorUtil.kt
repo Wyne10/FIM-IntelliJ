@@ -138,7 +138,9 @@ fun UExpression.int(): Int {
 }
 
 fun UExpression.double(): Double {
-    return (this.obj() as Double)
+    val obj = this.obj()
+    if(obj is Number) return obj.toDouble()
+    return 0.0
 }
 
 fun UExpression.float(): Float {
