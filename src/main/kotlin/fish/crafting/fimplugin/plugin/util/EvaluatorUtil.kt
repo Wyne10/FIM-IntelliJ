@@ -1,15 +1,23 @@
 package fish.crafting.fimplugin.plugin.util
 
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
+import fish.crafting.fimplugin.plugin.util.javakotlin.JavaKotlinUtil
+import fish.crafting.fimplugin.plugin.util.javakotlin.isJava
 import fish.crafting.fimplugin.plugin.util.mc.BoundingBox
 import fish.crafting.fimplugin.plugin.util.mc.Location
 import fish.crafting.fimplugin.plugin.util.mc.Vector
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.evaluation.uValueOf
 import org.jetbrains.uast.toUElementOfType
+import java.util.function.Supplier
 import kotlin.math.abs
 
 object EvaluatorUtil {
@@ -226,9 +234,15 @@ object EvaluatorUtil {
 
 fun UExpression.vector(): Vector? {
     val psi = this.sourcePsi ?: return null
-    //todo add reference expression handling
 
-    val callExpr = psi.toUElementOfType<UCallExpression>()
+    val refExpr = psi.toUElementOfType<UReferenceExpression>()
+    var callExpr = psi.toUElementOfType<UCallExpression>()
+
+    //If the Expression is a ReferenceExpression, set the callExpr to the resolved CallExpression
+    if(refExpr != null){
+        callExpr = refExpr.resolveToCallExpr()
+    }
+
     if(callExpr != null) {
         return Vector.createFromNewExpression(callExpr)
     }
@@ -238,9 +252,15 @@ fun UExpression.vector(): Vector? {
 
 fun UExpression.location(): Location? {
     val psi = this.sourcePsi ?: return null
-    //todo add reference expression handling
 
-    val callExpr = psi.toUElementOfType<UCallExpression>()
+    val refExpr = psi.toUElementOfType<UReferenceExpression>()
+    var callExpr = psi.toUElementOfType<UCallExpression>()
+
+    //If the Expression is a ReferenceExpression, set the callExpr to the resolved CallExpression
+    if(refExpr != null){
+        callExpr = refExpr.resolveToCallExpr()
+    }
+
     if(callExpr != null) {
         return Location.createFromCallExpression(callExpr)
     }
