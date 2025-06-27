@@ -19,10 +19,8 @@ class BoundingBoxMoveAction : ConstructorBasedAction() {
         e: AnActionEvent,
         newExpression: PsiCallExpression
     ) {
-        println("Moved!")
 
         newExpression.ifBoundingBox {
-            println("Moved but actually! $it")
             ValueEditManager.psiElement = newExpression
             //I2FEditPacket(it, MinecraftEditorTool.MOVE).sendToLatest()
             //I2FTeleportPacket(it).sendToLatest()

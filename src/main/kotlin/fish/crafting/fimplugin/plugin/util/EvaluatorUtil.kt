@@ -157,8 +157,6 @@ object EvaluatorUtil {
         try {
             val type = getBoundingBoxConstructorsConstructorType(args.size, args.first().getExpressionType()) ?: return null
 
-            println(type)
-
             return when(type) {
                 BoxConstructors.XYZ_XYZ -> BoundingBox(
                     args[0].double(),
