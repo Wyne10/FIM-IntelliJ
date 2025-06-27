@@ -56,6 +56,12 @@
                                         implementationClass="fish.crafting.fimplugin.plugin.marker.MiniMessageLineMarkerProvider"/>
 
 
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.BoundingBoxLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.BoundingBoxLineMarkerProvider"/>
+
+
         <postStartupActivity implementation = "fish.crafting.fimplugin.plugin.listener.ProjectOpenListener"/>
     </extensions>
 
@@ -65,7 +71,8 @@
 
     <actions>
         <group id="fim.vector_group" class="fish.crafting.fimplugin.plugin.group.VectorActionGroup" text="Vector Actions"/>
-        <group id="fim.location_group" class="fish.crafting.fimplugin.plugin.group.LocationActionGroup" text="Vector Actions"/>
+        <group id="fim.location_group" class="fish.crafting.fimplugin.plugin.group.LocationActionGroup" text="Location Actions"/>
+        <group id="fim.boundingbox_group" class="fish.crafting.fimplugin.plugin.group.BoundingBoxActionGroup" text="BoundingBox Actions"/>
 
         <action id="fim.tp_vec" class="fish.crafting.fimplugin.plugin.action.vector.VectorTeleportAction"
                 text="Teleport to Vector">
@@ -85,6 +92,16 @@
         <action id="fim.move_loc" class="fish.crafting.fimplugin.plugin.action.location.LocationMoveAction"
                 text="Move Location">
             <add-to-group group-id="fim.location_group" anchor="first"/>
+        </action>
+
+        <action id="fim.tp_box" class="fish.crafting.fimplugin.plugin.action.boundingbox.BoundingBoxTeleportAction"
+                text="Teleport to BoundingBox">
+            <add-to-group group-id="fim.boundingbox_group" anchor="first"/>
+        </action>
+
+        <action id="fim.move_box" class="fish.crafting.fimplugin.plugin.action.boundingbox.BoundingBoxMoveAction"
+                text="Move BoundingBox">
+            <add-to-group group-id="fim.boundingbox_group" anchor="first"/>
         </action>
     </actions>
 </idea-plugin>

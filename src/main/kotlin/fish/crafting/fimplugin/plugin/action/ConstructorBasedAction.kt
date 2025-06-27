@@ -2,13 +2,9 @@ package fish.crafting.fimplugin.plugin.action
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiCallExpression
 import fish.crafting.fimplugin.connection.netty.ConnectionManager
 import fish.crafting.fimplugin.plugin.util.DataKeys
-import fish.crafting.fimplugin.plugin.util.javakotlin.JavaKotlinFunction
-import fish.crafting.fimplugin.plugin.util.javakotlin.JavaKotlinUtil
-import fish.crafting.fimplugin.plugin.util.javakotlin.isJava
 import fish.crafting.fimplugin.plugin.util.javakotlin.isKotlin
 import org.jetbrains.kotlin.psi.KtCallExpression
 
@@ -27,7 +23,7 @@ abstract class ConstructorBasedAction: AnAction() {
 
             ktPerformAction(e, callExpr)
         }else{
-            val newExpr = element as? PsiNewExpression
+            val newExpr = element as? PsiCallExpression
             if(newExpr == null) return
 
             performAction(e, newExpr)
@@ -45,6 +41,6 @@ abstract class ConstructorBasedAction: AnAction() {
         e.presentation.isEnabled = ConnectionManager.hasConnection()
     }
 
-    protected abstract fun performAction(e: AnActionEvent, newExpression: PsiNewExpression)
+    protected abstract fun performAction(e: AnActionEvent, newExpression: PsiCallExpression)
     protected abstract fun ktPerformAction(e: AnActionEvent, callExpression: KtCallExpression)
 }

@@ -3,6 +3,7 @@ package fish.crafting.fimplugin.plugin.util
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import fish.crafting.fimplugin.plugin.util.javakotlin.JavaKotlinFunction
+import fish.crafting.fimplugin.plugin.util.mc.BoundingBox
 import fish.crafting.fimplugin.plugin.util.mc.Location
 import fish.crafting.fimplugin.plugin.util.mc.Vector
 import org.jetbrains.uast.UCallExpression
@@ -21,22 +22,10 @@ object ConversionUtil {
         return Location.createFromCallExpression(newExpression)
     }
 
-        /*JavaKotlinFunction<PsiElement, Vector?>(
-        { element ->
-            val newExpression = element.findContaining(UCallExpression::class.java) ?: return@JavaKotlinFunction null
-            Vector.createFromNewExpression(newExpression)
-
-            //val newExpression = element.findNewExpressionElement() ?: return@JavaKotlinFunction null
-            //val expressionList = newExpression.getExpressionList() ?: return@JavaKotlinFunction null
-
-            //Vector.createFromExpressionList(expressionList)
-        },
-        { element ->
-            /*val argList = element.getValueArgumentList() ?: return@JavaKotlinFunction null
-
-            Vector.createFromArgumentList(argList)*/
-            null
-        }).getOrNull(language, element)*/
+    fun elementToBoundingBox(element: PsiElement): BoundingBox? {
+        val newExpression = element.toUElementOfType<UCallExpression>() ?: return null
+        return BoundingBox.createFromCallExpression(newExpression)
+    }
 
 
 }

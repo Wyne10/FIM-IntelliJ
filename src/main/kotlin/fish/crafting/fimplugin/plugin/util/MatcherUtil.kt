@@ -1,6 +1,7 @@
 package fish.crafting.fimplugin.plugin.util
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.PsiTypesUtil
 import kotlinx.serialization.builtins.UByteArraySerializer
@@ -24,6 +25,10 @@ object MatcherUtil {
     )
     private val ADVENTURE_COMPONENT_CLASSPATHS = setOf(
         "net.kyori.adventure.text.Component"
+    )
+    private val BOUNDINGBOX_CLASSPATHS = setOf(
+        "org.bukkit.util.BoundingBox",
+        "net.minestom.server.collision.BoundingBox"
     )
 
     fun matchPsiToVector(element: PsiElement): Boolean {
@@ -66,8 +71,30 @@ object MatcherUtil {
         return argClass.isString()
     }
 
+    fun matchPsiToBoundingBox(element: PsiElement): Boolean {
+        val call = element.toUElementOfType<UCallExpression>() ?: return false
+        val resolve = call.resolve() ?: return false
+
+        if(call.kind == UastCallKind.CONSTRUCTOR_CALL) {
+            val classpath = resolve.containingClass?.qualifiedName ?: return false
+            return matchClassToBoundingBox(classpath)
+        }else if(call.kind == UastCallKind.METHOD_CALL) {
+            val classpath = resolve.containingClass?.qualifiedName ?: return false
+            if(!matchClassToBoundingBox(classpath)) return false
+
+            if(!resolve.hasModifierProperty(PsiModifier.STATIC)) return false
+
+            val returnType = call.returnType ?: return false
+            val returnClasspath = PsiTypesUtil.getPsiClass(returnType)?.qualifiedName ?: return false
+            return matchClassToBoundingBox(returnClasspath)
+        }
+
+        return false;
+    }
+
     fun matchClassToVector(classpath: String) = classpath in VECTOR_CLASSPATHS
     fun matchClassToLocation(classpath: String) = classpath in LOCATION_CLASSPATHS
     fun matchClassToMiniMessage(classpath: String) = classpath in MINIMESSAGE_CLASSPATHS
     fun matchClassToComponent(classpath: String) = classpath in ADVENTURE_COMPONENT_CLASSPATHS
+    fun matchClassToBoundingBox(classpath: String) = classpath in BOUNDINGBOX_CLASSPATHS
 }

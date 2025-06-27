@@ -2,6 +2,10 @@ package fish.crafting.fimplugin.plugin.util
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -12,6 +16,15 @@ fun PsiClass.isString() = isClasspath("java.lang.String")
 fun PsiClass.isClasspath(classpath: String): Boolean {
     val name = qualifiedName ?: return false
     return classpath == name
+}
+
+fun PsiType.getClasspath(): String? {
+    val psiClass = PsiTypesUtil.getPsiClass(this) ?: return null
+    return psiClass.qualifiedName
+}
+
+fun PsiMethod.isStatic(): Boolean {
+    return this.hasModifierProperty(PsiModifier.STATIC)
 }
 
 fun PsiElement.getValueArgumentList(): KtValueArgumentList? {

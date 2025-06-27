@@ -1,4 +1,4 @@
-package fish.crafting.fimplugin.plugin.action.vector
+package fish.crafting.fimplugin.plugin.action.boundingbox
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -7,7 +7,7 @@ import fish.crafting.fimplugin.plugin.action.ConstructorBasedAction
 import fish.crafting.fimplugin.plugin.util.ActionUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 
-class VectorTeleportAction : ConstructorBasedAction() {
+class BoundingBoxTeleportAction : ConstructorBasedAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
@@ -17,13 +17,13 @@ class VectorTeleportAction : ConstructorBasedAction() {
         e: AnActionEvent,
         newExpression: PsiCallExpression
     ) {
-        ActionUtils.tpVector(newExpression, e.inputEvent)
+        ActionUtils.tpLocation(newExpression, e.inputEvent)
     }
 
     override fun ktPerformAction(
         e: AnActionEvent,
         callExpression: KtCallExpression
     ) {
-        ActionUtils.tpVector(callExpression, e.inputEvent)
+        ActionUtils.tpLocation(callExpression, e.inputEvent)
     }
 }
