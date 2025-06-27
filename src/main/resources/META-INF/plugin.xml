@@ -50,6 +50,11 @@
         <codeInsight.lineMarkerProvider language="kotlin"
                                         implementationClass="fish.crafting.fimplugin.plugin.marker.LocationLineMarkerProvider"/>
 
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.MiniMessageLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+                                        implementationClass="fish.crafting.fimplugin.plugin.marker.MiniMessageLineMarkerProvider"/>
+
 
         <postStartupActivity implementation = "fish.crafting.fimplugin.plugin.listener.ProjectOpenListener"/>
     </extensions>

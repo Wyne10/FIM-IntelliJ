@@ -1,10 +1,18 @@
 package fish.crafting.fimplugin.plugin.util
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
+
+fun PsiClass.isString() = isClasspath("java.lang.String")
+
+fun PsiClass.isClasspath(classpath: String): Boolean {
+    val name = qualifiedName ?: return false
+    return classpath == name
+}
 
 fun PsiElement.getValueArgumentList(): KtValueArgumentList? {
     val parent = this.parent

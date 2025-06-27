@@ -7,6 +7,7 @@ object FIMAssets {
 
     val VECTOR = icon("actions/vector.png")
     val LOCATION = icon("actions/location.png")
+    val MINIMESSAGE = icon("actions/minimessage.png")
 
     private fun icon(file: String) = load("/assets/icons/$file")
 
