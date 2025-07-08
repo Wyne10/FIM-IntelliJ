@@ -1,11 +1,11 @@
 package fish.crafting.fimplugin.plugin.listener
 
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import fish.crafting.fimplugin.connection.netty.ConnectionManager
 import fish.crafting.fimplugin.connection.packetsystem.PacketManager
+import fish.crafting.fimplugin.plugin.minimessage.MinecraftFont
 
 class ProjectOpenListener : ProjectActivity {
     //Theoretically, it would make more sense to run this on application startup
@@ -13,6 +13,8 @@ class ProjectOpenListener : ProjectActivity {
     //In practice, this achieves the same thing, as you won't be communicating
     //if no project is open
     override suspend fun execute(project: Project) {
+        val font = MinecraftFont.font
+        val bold = MinecraftFont.bold
         ConnectionManager.startServer()
         PluginDisposable.getInstance() //Load disposable (server shutdown task) if not loaded already
         TimerService.getInstance()

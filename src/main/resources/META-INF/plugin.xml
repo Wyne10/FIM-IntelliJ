@@ -63,6 +63,7 @@
 
 
         <postStartupActivity implementation = "fish.crafting.fimplugin.plugin.listener.ProjectOpenListener"/>
+        <editorFactoryListener implementation = "fish.crafting.fimplugin.plugin.minimessage.MiniMessageEditorListener"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -102,6 +103,22 @@
         <action id="fim.move_box" class="fish.crafting.fimplugin.plugin.action.boundingbox.BoundingBoxMoveAction"
                 text="Move BoundingBox">
             <add-to-group group-id="fim.boundingbox_group" anchor="first"/>
+        </action>
+
+        <action id="fim.toggle_text_format_method"
+                class="fish.crafting.fimplugin.plugin.minimessage.ToggleMethodFormatAction"
+                text="Format MC Text for This Method"
+                description="Toggle rendering of Minecraft formatted strings in this method"
+                popup="true">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+
+        <action id="fim.toggle_text_format_class"
+                class="fish.crafting.fimplugin.plugin.minimessage.ToggleClassFormatAction"
+                text="Format MC Text for This Class"
+                description="Toggle rendering of Minecraft formatted strings in methods of this class"
+                popup="true">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
     </actions>
 </idea-plugin>

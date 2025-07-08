@@ -5,8 +5,10 @@ import fish.crafting.fimplugin.connection.netty.ConnectionConstants
 import fish.crafting.fimplugin.connection.packetsystem.OutPacket
 import fish.crafting.fimplugin.connection.packetsystem.PacketId
 import fish.crafting.fimplugin.connection.tool.MinecraftEditorTool
+import fish.crafting.fimplugin.plugin.util.mc.BoundingBox
 import fish.crafting.fimplugin.plugin.util.mc.Location
 import fish.crafting.fimplugin.plugin.util.mc.Vector
+import fish.crafting.fimplugin.plugin.util.writeBoundingBox
 import fish.crafting.fimplugin.plugin.util.writeLocation
 import fish.crafting.fimplugin.plugin.util.writeVector
 import io.netty.buffer.ByteBufOutputStream
@@ -26,6 +28,10 @@ class I2FEditPacket private constructor(val writer: (ByteBufOutputStream) -> Uni
 
     constructor(location: Location, tool: MinecraftEditorTool? = null) : this({
         it.writeLocation(location, true)
+    }, tool)
+
+    constructor(box: BoundingBox, tool: MinecraftEditorTool? = null) : this({
+        it.writeBoundingBox(box, true)
     }, tool)
 
     override fun getId() = ID

@@ -1,6 +1,7 @@
 package fish.crafting.fimplugin.plugin.util
 
 import fish.crafting.fimplugin.connection.tool.MinecraftEditorTool
+import fish.crafting.fimplugin.plugin.util.mc.BoundingBox
 import fish.crafting.fimplugin.plugin.util.mc.Location
 import fish.crafting.fimplugin.plugin.util.mc.Vector
 import io.netty.buffer.ByteBufInputStream
@@ -10,6 +11,7 @@ import io.netty.buffer.ByteBufOutputStream
  GUIDE FOR WILDCARDS
  0 - Vector
  1 - Location
+ 2 - Bounding Box
 */
 
 fun ByteBufOutputStream.writeVector(vector: Vector, writeAsWildcard: Boolean = false) {
@@ -27,6 +29,16 @@ fun ByteBufOutputStream.writeLocation(location: Location, writeAsWildcard: Boole
     writeFloat(location.pitch)
     writeFloat(location.yaw)
     writeUTF(location.world)
+}
+
+fun ByteBufOutputStream.writeBoundingBox(boundingBox: BoundingBox, writeAsWildcard: Boolean = false) {
+    if(writeAsWildcard) writeInt(2)
+    writeDouble(boundingBox.x1)
+    writeDouble(boundingBox.y1)
+    writeDouble(boundingBox.z1)
+    writeDouble(boundingBox.x2)
+    writeDouble(boundingBox.y2)
+    writeDouble(boundingBox.z2)
 }
 
 fun ByteBufInputStream.readVector(): Vector {

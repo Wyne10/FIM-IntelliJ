@@ -1,0 +1,97 @@
+package fish.crafting.fimplugin.plugin.minimessage.parser
+
+import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TagResolver
+
+object MiniMessageParser {
+    fun parse(text: String): ArrayList<TextComponent> {
+        TagResolvers.flushAll()
+
+        val output = arrayListOf<TextComponent>()
+
+        var activeStyling: TextStyling = TextStyling.default
+
+        var i = 0
+        var inQuotes = false
+        var openIndex = -1
+        var textStart = -1
+
+        while(i < text.length) {
+            val ch = text[i]
+
+            //We only want to consider quotes that are inside tags, to avoid situations where text that contains > is in tags.
+            if((ch == '"' || ch == '\'') && openIndex != -1){
+                inQuotes = !inQuotes
+            }
+
+            if(inQuotes){
+                i++
+                continue
+            }
+
+            if(ch == '<'){
+                openIndex = i
+            }else if(ch == '>' && openIndex != -1){
+                var tagStr = text.substring(openIndex + 1, i).lowercase()
+
+                val closing = tagStr.startsWith("/")
+                if(closing && tagStr.length > 1) tagStr = tagStr.substring(1)
+
+                val context = TagContext(tagStr, i)
+                val tag = TagResolvers.getResolver(context)
+
+                //If tag == null, then tag is invalid, continue as normal, use this in text.
+                //If the tag was resolved correctly, add the previous text in.
+                if(tag != null){
+
+                    //Now, for closing tags, they may not always work, even if they were matched to a resolver.
+                    //For example, </blue> is valid but won't be parsed if there wasn't a <blue> before.
+                    val newStyling = applyStyling(tag, context, closing)
+                    if(newStyling != null){
+                        //Okay we passed all checks
+
+                        if(textStart != -1){ //Had text
+                            val subText = text.substring(textStart, openIndex)
+                            output.add(TextComponent(subText, activeStyling))
+                            textStart = -1
+                        }
+
+                        activeStyling = newStyling
+                    }else if(textStart == -1){ //Tag wasn't parsed successfully, but we don't have any text yet. Mark this as the start of text then
+                        textStart = openIndex
+                    }
+                }else if(textStart == -1){ //Same as above
+                    textStart = openIndex
+                }
+
+                openIndex = -1 //Mark as not currently in brackets
+            }else if(openIndex == -1 && textStart == -1){ //Not inside bracket, and no text present yet
+                textStart = i
+            }
+
+            i++
+        }
+
+        if(textStart != -1){ //Had text
+            val subText = text.substring(textStart)
+            output.add(TextComponent(subText, activeStyling))
+        }
+
+        TagResolvers.flushAll()
+        return output
+    }
+
+    private fun applyStyling(tag: TagResolver, context: TagContext, closing: Boolean): TextStyling? {
+        if(closing){
+            val successfullyRemoved = tag.stack.removeStartingTop(context)
+            if(!successfullyRemoved) return null
+        }else{
+            tag.stack.addToTop(context)
+        }
+
+        val styling = TextStyling.default
+        TagResolvers.style(styling)
+
+        return styling
+    }
+
+}
