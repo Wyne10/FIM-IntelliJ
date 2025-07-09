@@ -29,3 +29,9 @@ val Language.isJava: Boolean
 
 val Language.isKotlin: Boolean
     get() = this.isKindOf("kotlin")
+
+val Language.isJson: Boolean
+    get() = this.isKindOf("JSON")
+
+val Language.isYaml: Boolean
+    get() = this.isKindOf("yaml")

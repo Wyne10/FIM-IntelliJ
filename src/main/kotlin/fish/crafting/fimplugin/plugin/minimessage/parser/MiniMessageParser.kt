@@ -1,9 +1,23 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser
 
 import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TagResolver
+import java.util.concurrent.atomic.AtomicBoolean
 
 object MiniMessageParser {
-    fun parse(text: String): ArrayList<TextComponent> {
+    fun parseOrLegacy(text: String, hadAnyFormat: AtomicBoolean? = null): ArrayList<TextComponent> {
+        if(text.contains('<') && text.contains('>')) {
+            val hadTags = AtomicBoolean(false)
+            val parsed = parseMiniMessage(text, hadTags)
+            if(hadTags.get()) {
+                hadAnyFormat?.set(true)
+                return parsed
+            }
+        }
+
+        return LegacyFormatParser.parse(text, hadTags = hadAnyFormat)
+    }
+
+    fun parseMiniMessage(text: String, hadTags: AtomicBoolean? = null): ArrayList<TextComponent> {
         TagResolvers.flushAll()
 
         val output = arrayListOf<TextComponent>()
@@ -48,6 +62,8 @@ object MiniMessageParser {
                     val newStyling = applyStyling(tag, context, closing)
                     if(newStyling != null){
                         //Okay we passed all checks
+
+                        hadTags?.set(true)
 
                         if(textStart != -1){ //Had text
                             val subText = text.substring(textStart, openIndex)

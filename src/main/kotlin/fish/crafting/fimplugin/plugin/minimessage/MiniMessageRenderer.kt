@@ -20,13 +20,13 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                           private var text: String,
                           private var width: Int = 1): EditorCustomElementRenderer {
 
-    constructor(text: String) : this(MiniMessageParser.parse(text), text)
+    constructor(text: String) : this(MiniMessageParser.parseOrLegacy(text), text)
 
     fun updateText(newText: String){
         if(text == newText) return
 
         components.clear()
-        components.addAll(MiniMessageParser.parse(newText))
+        components.addAll(MiniMessageParser.parseOrLegacy(newText))
     }
 
     override fun calcWidthInPixels(inlay: Inlay<*>): Int {

@@ -1,5 +1,7 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
+import com.intellij.json.psi.JsonStringLiteral
+import com.intellij.json.psi.impl.JsonRecursiveElementVisitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.JavaRecursiveElementVisitor
@@ -12,7 +14,10 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import fish.crafting.fimplugin.plugin.util.javakotlin.isJava
+import fish.crafting.fimplugin.plugin.util.javakotlin.isJson
 import fish.crafting.fimplugin.plugin.util.javakotlin.isKotlin
+import fish.crafting.fimplugin.plugin.util.javakotlin.isYaml
+import org.jetbrains.kotlin.js.parser.sourcemaps.JsonString
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -20,6 +25,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.toUElement
+import org.jetbrains.yaml.psi.YAMLQuotedText
+import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor
 
 fun PsiElement.checkMCFormatAndRun(controller: MiniMessageInlayController, run: (Boolean) -> Unit) {
     if(quickShouldFormatMCText(controller)) {
@@ -32,10 +39,16 @@ fun PsiElement.checkMCFormatAndRun(controller: MiniMessageInlayController, run: 
         .submit(AppExecutorUtil.getAppExecutorService())
 }
 
+fun PsiElement.shouldOnlyRenderIfValid(): Boolean{
+    return this is JsonStringLiteral || this is YAMLQuotedText
+}
+
 fun PsiElement.getLiteralValue(): Any? {
     return when(this) {
         is PsiLiteralExpression -> this.value
         is KtStringTemplateExpression -> this.entries.joinToString("") { it.text }
+        is JsonStringLiteral -> this.value
+        is YAMLQuotedText -> this.textValue
         else -> ""
     }
 }
@@ -43,6 +56,8 @@ fun PsiElement.getLiteralValue(): Any? {
 fun PsiElement.getParentLiteral(): PsiElement? {
     val clazz = if(this.language.isJava) PsiLiteralExpression::class.java
     else if(this.language.isKotlin) KtStringTemplateExpression::class.java
+    else if(this.language.isJson) JsonStringLiteral::class.java
+    else if(this.language.isYaml) YAMLQuotedText::class.java
     else return null
 
     return PsiTreeUtil.getParentOfType(this, clazz, false)
@@ -59,6 +74,18 @@ fun PsiFile.visitExpressions(run: (PsiElement) -> Unit) {
         accept(object : KtTreeVisitorVoid() {
             override fun visitStringTemplateExpression(expression: KtStringTemplateExpression) {
                 run.invoke(expression)
+            }
+        })
+    }else if(language.isJson) {
+        accept(object : JsonRecursiveElementVisitor() {
+            override fun visitStringLiteral(o: JsonStringLiteral) {
+                run.invoke(o)
+            }
+        })
+    }else if(language.isYaml){
+        accept(object : YamlRecursivePsiElementVisitor() {
+            override fun visitQuotedText(quotedText: YAMLQuotedText) {
+                run.invoke(quotedText)
             }
         })
     }
@@ -83,8 +110,19 @@ private fun PsiElement.resolveMethodFromLiteral(): PsiMethod? {
 
 /**
  * This method checks whether the Literal Expression is being edited right now.
+ * OR when no checks are necessary (formatting is always enabled (JSON, YAML))
  */
 fun PsiElement.quickShouldFormatMCText(controller: MiniMessageInlayController): Boolean {
+    if(this is JsonStringLiteral) {
+        val next = this.nextSibling
+        if(next != null && next.text == ":") return false
+        return true
+    }
+
+    if(this is YAMLQuotedText) {
+        return true
+    }
+
     //We are editing this rn
     return controller.matchesCached(this)
 }

@@ -1,25 +1,66 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
+import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
+import fish.crafting.fimplugin.plugin.util.DataKeys
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MiniMessageInlayController {
 
     var currentlyEditing: SmartPsiElementPointer<PsiElement>? = null
     private var blockInlay: Inlay<*>? = null
 
-    fun dispose() {
+    companion object {
+        fun removeAllFolds(removeInlays: Boolean = false) {
+            val projects = ProjectManager.getInstance().openProjects
+            for (project in projects) {
+                val fileEditorManager = FileEditorManager.getInstance(project)
+                for (fileEditor in fileEditorManager.allEditors) {
+                    val textEditor = fileEditor as? TextEditor ?: continue
+                    val editor = textEditor.editor
+                    val controller = editor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
+
+                    controller.removeFolds(editor)
+
+                    if(removeInlays) {
+                        controller.removeBlockInlay(editor, false)
+                        controller.removeAllInlineInlays(editor)
+                    }
+                }
+            }
+        }
+    }
+
+    fun dispose(editor: Editor) {
         clearCaches()
         blockInlay?.dispose()
         blockInlay = null
+
+        removeFolds(editor)
+    }
+
+    fun removeFolds(editor: Editor) {
+        editor.foldingModel.runBatchFoldingOperation {
+            editor.foldingModel.allFoldRegions.forEach {
+                if(it.placeholderText.isEmpty()){
+                    editor.foldingModel.removeFoldRegion(it)
+                }
+            }
+        }
+        (editor as? EditorEx)?.reinitSettings()
     }
 
     /**
@@ -102,7 +143,7 @@ class MiniMessageInlayController {
     }
 
     fun blockInlay(editor: Editor, expression: PsiElement, text: String){
-        if(blockInlay != null){
+        if(blockInlay != null){ //We don't need to check shouldOnlyRenderIfValid(), because if the user had at one point in this block inlay had tags, it should just stay
             if(matchesCached(expression)){ //The current inlay is correct, just update text.
                 val renderer = blockInlay!!.renderer as MiniMessageRenderer
                 renderer.updateText(text)
@@ -116,16 +157,33 @@ class MiniMessageInlayController {
 
         removeInlineInlay(editor, expression)
 
-        blockInlay = editor.inlayModel.addBlockElement(
-            expression.endOffset,
-            false,
-            false,
-            100,
-            MiniMessageRenderer(text)
-        )
+        if(expression.shouldOnlyRenderIfValid()){
+            val hadTags = AtomicBoolean(false)
+            val parseOrLegacy = MiniMessageParser.parseOrLegacy(text, hadTags)
+
+            if(hadTags.get()){
+                blockInlay = editor.inlayModel.addBlockElement(
+                    expression.endOffset,
+                    false,
+                    false,
+                    100,
+                    MiniMessageRenderer(parseOrLegacy, text)
+                )
+            }else{
+                blockInlay = null
+            }
+        }else{
+            blockInlay = editor.inlayModel.addBlockElement(
+                expression.endOffset,
+                false,
+                false,
+                100,
+                MiniMessageRenderer(text)
+            )
+        }
 
         if(oldFocused != null){
-            updateInlineFor(editor, oldFocused)
+            updateInlineFor(editor, oldFocused, false)
         }
     }
 
@@ -138,6 +196,14 @@ class MiniMessageInlayController {
         }
 
         editor.inlayModel.getInlineElementsInRange(startOffset, endOffset)
+            .filter { it.renderer is MiniMessageRenderer }
+            .forEach { it.dispose() }
+    }
+
+    fun removeAllInlineInlays(editor: Editor){
+        val document = editor.document
+
+        editor.inlayModel.getInlineElementsInRange(0, document.textLength)
             .filter { it.renderer is MiniMessageRenderer }
             .forEach { it.dispose() }
     }
@@ -180,8 +246,8 @@ class MiniMessageInlayController {
         val caretOffset = editor.caretModel.offset
         val psiFile = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document) ?: return null
 
-        var psiElement = psiFile.findElementAt(caretOffset) ?: return null
-        var stringLiteral = psiElement.getParentLiteral()
+        var psiElement = psiFile.findElementAt(caretOffset)
+        var stringLiteral = psiElement?.getParentLiteral()
 
         if(stringLiteral == null){ //Try at offset - 1
             psiElement = psiFile.findElementAt(caretOffset - 1) ?: return null
@@ -196,7 +262,18 @@ class MiniMessageInlayController {
         val inlayModel = editor.inlayModel
 
         removeInlineInlay(editor, expression, false)
-        inlayModel.addInlineElement(offset, true, MiniMessageRenderer(text))
+
+        if(expression.shouldOnlyRenderIfValid()){
+            val hadTags = AtomicBoolean(false)
+            val parseOrLegacy = MiniMessageParser.parseOrLegacy(text, hadTags)
+            if(hadTags.get()){
+                inlayModel.addInlineElement(offset, true, MiniMessageRenderer(parseOrLegacy, text))
+                collapse(editor, expression)
+            }
+        }else{
+            inlayModel.addInlineElement(offset, true, MiniMessageRenderer(text))
+            collapse(editor, expression)
+        }
     }
 
     private fun handleCaretUpdate(editor: Editor) {
@@ -223,11 +300,11 @@ class MiniMessageInlayController {
         }
     }
 
-    fun updateInlineFor(editor: Editor, expression: PsiElement) {
+    fun updateInlineFor(editor: Editor, expression: PsiElement, checkBlockInline: Boolean = true) {
         val value = expression.getLiteralValue()
         if(value !is String) return
 
-        if(matchesCached(expression)) {
+        if(checkBlockInline && matchesCached(expression)) {
             blockInlay(editor, expression, value)
             return
         }
@@ -235,7 +312,6 @@ class MiniMessageInlayController {
         expression.checkMCFormatAndRun(this) { result ->
             if(result){
                 updateInlineStringLiteral(editor, value, expression)
-                collapse(editor, expression)
             }else{
                 removeInlineInlay(editor, expression)
             }

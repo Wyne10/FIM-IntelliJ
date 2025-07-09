@@ -19,4 +19,12 @@ class TextStyling(var color: Color = Color.WHITE,
     }
 
     fun clone() = TextStyling(color, shadowColor, bold, italic, underlined, strikethrough, obfuscated)
+
+    fun resetDecorators() {
+        bold = false
+        italic = false
+        underlined = false
+        strikethrough = false
+        obfuscated = false
+    }
 }

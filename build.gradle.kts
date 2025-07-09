@@ -22,6 +22,7 @@ dependencies {
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
         bundledPlugin("org.toml.lang")
+        bundledPlugin("org.jetbrains.plugins.yaml")
     }
 }
 
