@@ -5,9 +5,6 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.psi.PsiExpressionList
-import com.intellij.psi.PsiLiteralExpression
-import com.intellij.psi.PsiMethodCallExpression
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextComponent
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling

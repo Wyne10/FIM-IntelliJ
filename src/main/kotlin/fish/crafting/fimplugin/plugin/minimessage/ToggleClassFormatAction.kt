@@ -38,7 +38,6 @@ class ToggleClassFormatAction : ToggleAction() {
     override fun setSelected(e: AnActionEvent, state: Boolean) {
         val method = e.getData(CommonDataKeys.PSI_ELEMENT) as? PsiClass ?: return
         TextFormatRegistryService.instance.markClass(method, state)
-        MiniMessageMatcher.clearCaches()
 
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val controller = editor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return

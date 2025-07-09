@@ -19,18 +19,6 @@ class TextFormatRegistryService {
             return clazz.qualifiedName ?: ""
         }
 
-        fun callToMethodString(call: PsiMethodCallExpression): String? {
-            val methodName = call.methodExpression.referenceName ?: return null
-            val r = callToClassString(call) + "#" + methodName
-
-            return r
-        }
-
-        fun callToClassString(call: PsiMethodCallExpression): String? {
-            val qualifier = call.methodExpression.qualifierExpression
-            val type = qualifier?.type ?: return null
-            return type.canonicalText
-        }
     }
 
     private val validMethods = mutableSetOf<String>()
@@ -38,8 +26,6 @@ class TextFormatRegistryService {
 
     fun isClassValid(clazz: PsiClass): Boolean = classToString(clazz) in validClasses
     fun isMethodValid(method: PsiMethod): Boolean = methodToString(method) in validMethods
-    fun isClassValid(call: PsiMethodCallExpression): Boolean = callToClassString(call) in validClasses
-    fun isMethodValid(call: PsiMethodCallExpression): Boolean = callToMethodString(call) in validMethods
 
     fun markMethod(method: PsiMethod, state: Boolean) {
         if(state){
