@@ -4,6 +4,7 @@ import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpressionList
@@ -31,6 +32,11 @@ import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor
 fun PsiElement.checkMCFormatAndRun(controller: MiniMessageInlayController, run: (Boolean) -> Unit) {
     if(quickShouldFormatMCText(controller)) {
         run.invoke(true)
+        return
+    }
+
+    if(DumbService.isDumb(project)) {
+        run.invoke(false)
         return
     }
 

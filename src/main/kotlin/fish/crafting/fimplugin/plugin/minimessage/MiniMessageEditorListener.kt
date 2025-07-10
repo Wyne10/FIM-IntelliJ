@@ -8,10 +8,12 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiDocumentManager
 import fish.crafting.fimplugin.plugin.listener.PluginDisposable
@@ -74,14 +76,27 @@ class MiniMessageEditorListener : EditorFactoryListener {
                     oldController.removeFolds(oldEditor)
                 }
 
-                if(event.newEditor is TextEditor){
-                    val newEditor = (event.newEditor as TextEditor).editor
-                    val newController = newEditor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
-
-                    newController.updateAllInlines(newEditor)
-                    newController.handleCaretChanged(newEditor)
-                }
+                onFileOpen(event.newEditor)
             }
         })
+
+        project.messageBus.connect().subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+            override fun enteredDumbMode() { //Indexing started
+            }
+
+            override fun exitDumbMode() { //Indexing complete, rebuild the shown class
+                onFileOpen(FileEditorManager.getInstance(project).focusedEditor)
+            }
+        })
+    }
+
+    private fun onFileOpen(fileEditor: FileEditor?){
+        if(fileEditor is TextEditor){
+            val newEditor = fileEditor.editor
+            val newController = newEditor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
+
+            newController.updateAllInlines(newEditor)
+            newController.handleCaretChanged(newEditor)
+        }
     }
 }
