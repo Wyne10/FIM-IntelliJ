@@ -52,12 +52,6 @@
                                         implementationClass="fish.crafting.fimplugin.plugin.marker.LocationLineMarkerProvider"/>
 
         <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="fish.crafting.fimplugin.plugin.marker.MiniMessageLineMarkerProvider"/>
-        <codeInsight.lineMarkerProvider language="kotlin"
-                                        implementationClass="fish.crafting.fimplugin.plugin.marker.MiniMessageLineMarkerProvider"/>
-
-
-        <codeInsight.lineMarkerProvider language="JAVA"
                                         implementationClass="fish.crafting.fimplugin.plugin.marker.BoundingBoxLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="kotlin"
                                         implementationClass="fish.crafting.fimplugin.plugin.marker.BoundingBoxLineMarkerProvider"/>
