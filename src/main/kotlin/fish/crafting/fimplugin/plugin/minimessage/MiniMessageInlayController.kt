@@ -1,6 +1,7 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
@@ -8,14 +9,28 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
+import com.intellij.util.Alarm
+import fish.crafting.fimplugin.plugin.listener.PluginDisposable
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.util.DataKeys
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MiniMessageInlayController {
@@ -146,7 +161,17 @@ class MiniMessageInlayController {
         if(blockInlay != null){ //We don't need to check shouldOnlyRenderIfValid(), because if the user had at one point in this block inlay had tags, it should just stay
             if(matchesCached(expression)){ //The current inlay is correct, just update text.
                 val renderer = blockInlay!!.renderer as MiniMessageRenderer
-                renderer.updateText(text)
+                val changed = renderer.updateText(text)
+
+                if(changed) {
+                    blockInlay!!.update()
+                }
+
+                //If the user is editing text and adds &k, try and add an update timer
+                //This won't remove a timer if the user removes a &k, but that won't really be a problem
+                //since there is only one block inlay at a time
+                attachObfuscatedTimer(renderer, blockInlay)
+
                 return
             }
         }
@@ -157,33 +182,67 @@ class MiniMessageInlayController {
 
         removeInlineInlay(editor, expression)
 
+        var appliedRenderer: MiniMessageRenderer? = null
         if(expression.shouldOnlyRenderIfValid()){
             val hadTags = AtomicBoolean(false)
             val parseOrLegacy = MiniMessageParser.parseOrLegacy(text, hadTags)
 
             if(hadTags.get()){
+                appliedRenderer = MiniMessageRenderer(parseOrLegacy, text)
                 blockInlay = editor.inlayModel.addBlockElement(
                     expression.endOffset,
                     false,
                     false,
                     100,
-                    MiniMessageRenderer(parseOrLegacy, text)
+                    appliedRenderer
                 )
             }else{
                 blockInlay = null
             }
         }else{
+            appliedRenderer = MiniMessageRenderer(text)
             blockInlay = editor.inlayModel.addBlockElement(
                 expression.endOffset,
                 false,
                 false,
                 100,
-                MiniMessageRenderer(text)
+                appliedRenderer
             )
         }
 
+        attachObfuscatedTimer(appliedRenderer, blockInlay)
+
         if(oldFocused != null){
             updateInlineFor(editor, oldFocused, false)
+        }
+    }
+
+    @OptIn(FlowPreview::class)
+    fun attachObfuscatedTimer(renderer: MiniMessageRenderer?, inlay: Inlay<*>?) {
+        if(renderer != null && inlay != null && renderer.hasObfuscation()) {
+            if(renderer.hasAttachedTimer) return
+            renderer.attachTimer()
+
+            //Register our inlay as disposable of our plugin so no memory leaks! :D
+            Disposer.register(PluginDisposable.getInstance(), inlay)
+
+            CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+                flow {
+                    while (isActive) {
+                        emit(Unit)
+                        delay(50)
+                    }
+                }
+                    .sample(50)
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        withContext(Dispatchers.EDT) {
+                            inlay.update()
+                        }
+                    }
+            }.also { scope ->
+                Disposer.register(inlay) { scope.cancel() }
+            }
         }
     }
 
@@ -263,17 +322,24 @@ class MiniMessageInlayController {
 
         removeInlineInlay(editor, expression, false)
 
+        var appliedRenderer: MiniMessageRenderer? = null
+        var appliedInlay: Inlay<*>? = null
+
         if(expression.shouldOnlyRenderIfValid()){
             val hadTags = AtomicBoolean(false)
             val parseOrLegacy = MiniMessageParser.parseOrLegacy(text, hadTags)
             if(hadTags.get()){
-                inlayModel.addInlineElement(offset, true, MiniMessageRenderer(parseOrLegacy, text))
+                appliedRenderer = MiniMessageRenderer(parseOrLegacy, text)
+                appliedInlay = inlayModel.addInlineElement(offset, true, appliedRenderer)
                 collapse(editor, expression)
             }
         }else{
-            inlayModel.addInlineElement(offset, true, MiniMessageRenderer(text))
+            appliedRenderer = MiniMessageRenderer(text)
+            appliedInlay = inlayModel.addInlineElement(offset, true, appliedRenderer)
             collapse(editor, expression)
         }
+
+        attachObfuscatedTimer(appliedRenderer, appliedInlay)
     }
 
     private fun handleCaretUpdate(editor: Editor) {

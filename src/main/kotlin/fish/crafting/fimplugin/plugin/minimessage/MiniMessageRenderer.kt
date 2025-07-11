@@ -1,32 +1,49 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextComponent
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
-import io.ktor.util.reflect.instanceOf
-import java.awt.Color
-import java.awt.Font
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Rectangle
-import java.awt.RenderingHints
+import fish.crafting.fimplugin.plugin.util.ObfuscationUtil
+import java.awt.*
 
 class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                           private var text: String,
-                          private var width: Int = 1): EditorCustomElementRenderer {
+                          private var width: Int = 1,
+                          private var attachedTimer: Boolean = false): EditorCustomElementRenderer {
 
     constructor(text: String) : this(MiniMessageParser.parseOrLegacy(text), text)
 
-    fun updateText(newText: String){
-        if(text == newText) return
+    private var isObfuscated: Boolean? = null
+    fun hasObfuscation(): Boolean {
+        if(isObfuscated == null) {
+            isObfuscated = false
+
+            for (component in components) {
+                if(component.styling.obfuscated) {
+                    isObfuscated = true
+                    break
+                }
+            }
+        }
+
+        return isObfuscated ?: false
+    }
+
+    val hasAttachedTimer get() = attachedTimer
+    fun attachTimer() {
+        attachedTimer = true
+    }
+
+    fun updateText(newText: String): Boolean {
+        if(text == newText) return false
 
         components.clear()
         components.addAll(MiniMessageParser.parseOrLegacy(newText))
+        isObfuscated = null //Re-calculate obfuscation
+        return true
     }
 
     override fun calcWidthInPixels(inlay: Inlay<*>): Int {
@@ -46,16 +63,24 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
 
         for (component in components) {
-            val styledFont = if(component.styling.bold){
-                applyStylingToFont(MinecraftFont.bold, component.styling)
+            val baseFont = if(component.styling.bold){
+                MinecraftFont.bold
             }else{
-                applyStylingToFont(MinecraftFont.font, component.styling)
+                MinecraftFont.font
             }
 
+            var text = component.content
+
+            if(component.styling.obfuscated) {
+                val metrics = g.getFontMetrics(baseFont)
+                text = ObfuscationUtil.obfuscate(g, metrics, baseFont, text)
+            }
+
+            val styledFont = applyStylingToFont(baseFont, component.styling)
             g2.font = styledFont
 
-            drawText(g2, x + 2, y + 2, component.content, component.styling.getShadow(), component.styling)
-            val w = drawText(g2, x, y, component.content, component.styling.color, component.styling)
+            drawText(g2, x + 2, y + 2, text, component.styling.getShadow(), component.styling)
+            val w = drawText(g2, x, y, text, component.styling.color, component.styling)
             x += w
             width += w
         }
