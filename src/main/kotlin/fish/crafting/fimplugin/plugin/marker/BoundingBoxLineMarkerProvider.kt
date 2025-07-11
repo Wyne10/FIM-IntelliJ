@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import fish.crafting.fimplugin.plugin.assets.FIMAssets
 import fish.crafting.fimplugin.plugin.util.DataKeys
+import fish.crafting.fimplugin.plugin.util.LineMarkerUtil
 import fish.crafting.fimplugin.plugin.util.MatcherUtil
+import fish.crafting.fimplugin.plugin.util.isLeafIdentifier
 import java.awt.Component
 import java.awt.event.MouseEvent
 
@@ -21,7 +23,10 @@ class BoundingBoxLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIcon
     override fun getIcon() = FIMAssets.BOUNDING_BOX
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-        if(!MatcherUtil.matchPsiToBoundingBox(element)) return null
+        if(!element.isLeafIdentifier()) return null
+
+        val constructor = LineMarkerUtil.getConstructorFromLeaf(element) ?: return null
+        if(!MatcherUtil.matchPsiToBoundingBox(constructor)) return null
 
         return LineMarkerInfo(
             element,
@@ -37,6 +42,8 @@ class BoundingBoxLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIcon
     override fun navigate(e: MouseEvent?, elt: PsiElement?) {
         if(elt == null) return
 
+        val constructor = LineMarkerUtil.getConstructorFromLeaf(elt) ?: return
+
         if(e != null){
             val action = ActionManager.getInstance().getAction("fim.boundingbox_group") as ActionGroup
             val c: Component? = e.component
@@ -48,7 +55,7 @@ class BoundingBoxLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIcon
                 )
                 val builder = SimpleDataContext.builder()
                     .setParent(DataManager.getInstance().getDataContext(c, e.x, e.y))
-                    .add(DataKeys.PASSED_ELEMENT, elt)
+                    .add(DataKeys.PASSED_ELEMENT, constructor)
 
                 popup.setDataContext {
                     builder.build()

@@ -277,28 +277,26 @@ fun UExpression.stringOrNull(): String? {
     return null
 }
 
+fun UExpression.number(): Double? {
+    val obj = obj()
+    if(obj is Number) return obj.toDouble()
+    return 0.0
+}
+
 fun UExpression.int(): Int {
-    return (this.obj() as Int)
+    return (obj() as Int)
 }
 
 fun UExpression.double(): Double {
-    val obj = this.obj()
+    val obj = obj()
     if(obj is Number) return obj.toDouble()
     return 0.0
 }
 
 fun UExpression.float(): Float {
-    return (this.obj() as Float)
+    return (obj() as Float)
 }
 
 fun UExpression.obj(): Any? {
-    val value = this.uValueOf()
-    if (value == null) {
-        return null
-    }
-    val constant = value.toConstant()
-    if (constant == null) {
-        return null
-    }
-    return constant.value
+    return evaluate()
 }

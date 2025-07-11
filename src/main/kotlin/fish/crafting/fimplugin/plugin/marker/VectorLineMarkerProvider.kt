@@ -10,9 +10,12 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
 import fish.crafting.fimplugin.plugin.assets.FIMAssets
 import fish.crafting.fimplugin.plugin.util.DataKeys
+import fish.crafting.fimplugin.plugin.util.LineMarkerUtil
 import fish.crafting.fimplugin.plugin.util.MatcherUtil
+import fish.crafting.fimplugin.plugin.util.isLeafIdentifier
 import java.awt.Component
 import java.awt.event.MouseEvent
 
@@ -21,7 +24,10 @@ class VectorLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIconNavig
     override fun getIcon() = FIMAssets.VECTOR
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-        if(!MatcherUtil.matchPsiToVector(element)) return null
+        if(!element.isLeafIdentifier()) return null
+
+        val constructor = LineMarkerUtil.getConstructorFromLeaf(element) ?: return null
+        if(!MatcherUtil.matchPsiToVector(constructor)) return null
 
         return LineMarkerInfo(
             element,
@@ -37,6 +43,8 @@ class VectorLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIconNavig
     override fun navigate(e: MouseEvent?, elt: PsiElement?) {
         if(elt == null) return
 
+        val constructor = LineMarkerUtil.getConstructorFromLeaf(elt) ?: return
+
         if(e != null){
             val action = ActionManager.getInstance().getAction("fim.vector_group") as ActionGroup
             val c: Component? = e.component
@@ -46,9 +54,10 @@ class VectorLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIconNavig
                     ActionPlaces.EDITOR_POPUP,
                     action
                 )
+
                 val builder = SimpleDataContext.builder()
                     .setParent(DataManager.getInstance().getDataContext(c, e.x, e.y))
-                    .add(DataKeys.PASSED_ELEMENT, elt)
+                    .add(DataKeys.PASSED_ELEMENT, constructor)
 
                 popup.setDataContext {
                     builder.build()
