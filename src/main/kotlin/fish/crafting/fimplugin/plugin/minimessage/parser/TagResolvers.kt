@@ -27,6 +27,10 @@ object TagResolvers {
         allResolvers.forEach { it.stack.removeAnythingHigherThan(index) }
     }
 
+    fun forEach(forEach: (TagResolver) -> Unit) {
+        allResolvers.forEach(forEach)
+    }
+
     val COLOR = register(ColorTagResolver)
     val BOLD = register(BoldTagResolver)
     val FONT = register(FontTagResolver)
@@ -44,6 +48,6 @@ object TagResolvers {
     val SCORE = register(ScoreTagResolver)
     val SELECTOR = register(SelectorTagResolver)
     val GRADIENT = register(GradientTagResolver)
-
+    val RESET = register(ResetTagResolver)
 
 }

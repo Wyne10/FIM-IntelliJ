@@ -72,7 +72,7 @@ object MiniMessageParser {
                         }
 
                         activeStyling = newStyling
-                    }else if(textStart == -1){ //Tag wasn't parsed successfully, but we don't have any text yet. Mark this as the start of text then
+                    } else if(textStart == -1){ //Tag wasn't parsed successfully, but we don't have any text yet. Mark this as the start of text then
                         textStart = openIndex
                     }
                 }else if(textStart == -1){ //Same as above
@@ -96,7 +96,18 @@ object MiniMessageParser {
         return output
     }
 
+    private fun resetAllTags(){
+        TagResolvers.forEach {
+            it.stack.flush()
+        }
+    }
+
     private fun applyStyling(tag: TagResolver, context: TagContext, closing: Boolean): TextStyling? {
+        if(tag == TagResolvers.RESET){
+            if(!closing) resetAllTags()
+            return TextStyling() //Reset to default
+        }
+
         if(closing){
             val successfullyRemoved = tag.stack.removeStartingTop(context)
             if(!successfullyRemoved) return null
