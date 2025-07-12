@@ -5,7 +5,7 @@ import kotlin.math.min
 
 class TagContext(val slices: List<String>, val index: Int) {
 
-    constructor(tag: String, index: Int) : this(tag.split(':', limit = 3), index)
+    constructor(tag: String, index: Int) : this(tag.split(':'), index)
 
     fun last(): String = slices.last()
     fun first(): String = slices.first()

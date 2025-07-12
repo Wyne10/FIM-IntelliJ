@@ -79,10 +79,33 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
             val styledFont = applyStylingToFont(baseFont, component.styling)
             g2.font = styledFont
 
-            drawText(g2, x + 2, y + 2, text, component.styling.getShadow(), component.styling)
-            val w = drawText(g2, x, y, text, component.styling.color, component.styling)
-            x += w
-            width += w
+            // Drawing Text
+
+            val baseColor = component.styling.color
+            var w = 0
+            if(baseColor is TextStyling.GradientColorElement) {
+                var i = 0
+                val textLen = text.length
+                for (ch in text) {
+                    val letter = ch.toString()
+                    val color = baseColor.getColor(textLen, i)
+
+                    drawText(g2, x + 2, y + 2, letter, component.styling.getShadow(color), component.styling)
+                    w = drawText(g2, x, y, letter, color, component.styling)
+
+                    x += w
+                    width += w
+                    i++
+                }
+            }else if(baseColor is TextStyling.SolidColorElement) {
+                val color = baseColor.color
+                drawText(g2, x + 2, y + 2, text, component.styling.getShadow(color), component.styling)
+                w = drawText(g2, x, y, text, color, component.styling)
+
+                x += w
+                width += w
+            }
+
         }
 
         val updateWidth = this.width != width

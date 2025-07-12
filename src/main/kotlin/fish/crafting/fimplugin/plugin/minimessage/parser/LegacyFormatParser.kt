@@ -64,7 +64,7 @@ object LegacyFormatParser {
             if(color != null){ //Is color
                 valid = true
                 currentStyling.resetDecorators()
-                currentStyling.color = color
+                currentStyling.color = TextStyling.SolidColorElement(color)
             }else{ //Is something else
                 valid = true
                 when(symbol) {

@@ -43,6 +43,7 @@ object TagResolvers {
     val PRIDE = register(PrideTagResolver)
     val SCORE = register(ScoreTagResolver)
     val SELECTOR = register(SelectorTagResolver)
+    val GRADIENT = register(GradientTagResolver)
 
 
 }

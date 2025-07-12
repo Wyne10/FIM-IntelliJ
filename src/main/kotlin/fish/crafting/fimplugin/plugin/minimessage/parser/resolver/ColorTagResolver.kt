@@ -31,16 +31,10 @@ object ColorTagResolver : TagResolver() {
     val verboseTags = hashSetOf("color", "c", "colour")
 
     override fun apply(styling: TextStyling, tag: TagContext) {
-        val colorStr = tag.last()
-
-        val color = if(colorStr.startsWith("#")){
-            ColorHexUtil.fromHexOrNull(colorStr)
-        }else{
-            colorMap[colorStr]
-        }
+        val color = resolveColor(tag.last())
 
         if(color != null) {
-            styling.color = color
+            styling.color = TextStyling.SolidColorElement(color)
         }
     }
 
@@ -49,12 +43,24 @@ object ColorTagResolver : TagResolver() {
         if(tag.size >= 3) return false
 
         val color = tag.last()
-        if(color == "color") return true //</color>
+        if(tag.size == 1 && color == "color") return true //</color>
 
         if(color.startsWith("#")) {
             return ColorHexUtil.fromHexOrNull(color) != null
         }else{
             return colorMap.containsKey(color)
+        }
+    }
+
+    fun resolveColor(colorStr: String): Color? {
+        return if(colorStr.startsWith("#")){
+            try{
+                ColorHexUtil.fromHexOrNull(colorStr)
+            }catch (ignored: Exception) {
+                null
+            }
+        }else{
+            colorMap[colorStr]
         }
     }
 
