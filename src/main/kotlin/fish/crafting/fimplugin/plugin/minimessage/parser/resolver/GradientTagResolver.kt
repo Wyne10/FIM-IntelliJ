@@ -49,7 +49,10 @@ object GradientTagResolver : TagResolver(CommonTagStacks.COLOR) {
         if(tag.size <= 2) return false
         if(tag.first() != "gradient") return false
 
-        val hasPhase = tag.last().toDoubleOrNull() != null
+        val phase = tag.last().toDoubleOrNull()
+        val hasPhase = phase != null
+
+        if(phase != null && (phase < -1.0 || phase > 1.0)) return false
 
         for (i in 1 until tag.size) {
             if(i == tag.size - 1 && hasPhase) continue

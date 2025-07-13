@@ -45,6 +45,10 @@ object TagResolvers {
     val UNDERLINE = register(UnderlinedTagResolver)
     val OBFUSCATED = register(ObfuscatedTagResolver)
     val STRIKETHROUGH = register(StrikethroughTagResolver)
+    val GRADIENT = register(GradientTagResolver)
+    val RAINBOW = register(RainbowTagResolver)
+    val RESET = register(ResetTagResolver)
+    val TRANSITION = register(TransitionTagResolver)
     val TRANSLATE = register(TranslatableTagResolver)
     val TRANSLATE_FALLBACK = register(TranslatableFallbackTagResolver)
     val CLICK = register(ClickTagResolver)
@@ -53,9 +57,6 @@ object TagResolvers {
     val PRIDE = register(PrideTagResolver)
     val SCORE = register(ScoreTagResolver)
     val SELECTOR = register(SelectorTagResolver)
-    val GRADIENT = register(GradientTagResolver)
-    val RESET = register(ResetTagResolver)
-    val RAINBOW = register(RainbowTagResolver)
     val KEY = register(KeyTagResolver)
 
 }
