@@ -1,6 +1,7 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser
 
 import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TagResolver
+import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TextTagResolver
 import java.util.concurrent.atomic.AtomicBoolean
 
 object MiniMessageParser {
@@ -17,17 +18,27 @@ object MiniMessageParser {
         return LegacyFormatParser.parse(text, hadTags = hadAnyFormat)
     }
 
-    fun parseMiniMessage(text: String, hadTags: AtomicBoolean? = null): ArrayList<TextComponent> {
+    fun parseMiniMessage(message: String, hadTags: AtomicBoolean? = null): ArrayList<TextComponent> {
         TagResolvers.flushAll()
 
+        var text = message
+        val stringBuilder by lazy { StringBuilder(text) }
         val output = arrayListOf<TextComponent>()
-
         var activeStyling: TextStyling = TextStyling.default
 
         var i = 0
         var inQuotes = false
         var openIndex = -1
         var textStart = -1
+
+        fun addOutput(subText: String, styling: TextStyling){
+            output.add(TextComponent(subText, styling))
+
+            val color = activeStyling.color
+            if(color is TextStyling.LengthTrackingColorElement){
+                color.textLength += subText.length
+            }
+        }
 
         while(i < text.length) {
             val ch = text[i]
@@ -55,27 +66,39 @@ object MiniMessageParser {
 
                 //If tag == null, then tag is invalid, continue as normal, use this in text.
                 //If the tag was resolved correctly, add the previous text in.
+                var success = false
                 if(tag != null){
-
-                    //Now, for closing tags, they may not always work, even if they were matched to a resolver.
-                    //For example, </blue> is valid but won't be parsed if there wasn't a <blue> before.
-                    val newStyling = applyStyling(tag, context, closing)
-                    if(newStyling != null){
-                        //Okay we passed all checks
-
-                        hadTags?.set(true)
-
-                        if(textStart != -1){ //Had text
-                            val subText = text.substring(textStart, openIndex)
-                            output.add(TextComponent(subText, activeStyling))
-                            textStart = -1
+                    context.resolver = tag
+                    if(tag is TextTagResolver){
+                        if(!closing){ //text tags aren't closable but should be parsed
+                            tag.getText(context)?.let{
+                                stringBuilder.insert(i + 1, it)
+                                text = stringBuilder.toString()
+                            }
                         }
-
-                        activeStyling = newStyling
-                    } else if(textStart == -1){ //Tag wasn't parsed successfully, but we don't have any text yet. Mark this as the start of text then
-                        textStart = openIndex
                     }
-                }else if(textStart == -1){ //Same as above
+
+                    if(tag !is TextTagResolver || tag.isAlsoStyling()){
+                        //Now, for closing tags, they may not always work, even if they were matched to a resolver.
+                        //For example, </blue> is valid but won't be parsed if there wasn't a <blue> before.
+                        val newStyling = applyStyling(tag, context, closing)
+                        if(newStyling != null){
+                            //Okay we passed all checks
+
+                            hadTags?.set(true)
+
+                            if(textStart != -1){ //Had text
+                                addOutput(text.substring(textStart, openIndex), activeStyling)
+                                textStart = -1
+                            }
+
+                            activeStyling = newStyling
+                            success = true
+                        }
+                    }
+                }
+
+                if(!success && textStart == -1){ //Tag wasn't parsed successfully, but we don't have any text yet. Mark this as the start of text then
                     textStart = openIndex
                 }
 
@@ -88,8 +111,7 @@ object MiniMessageParser {
         }
 
         if(textStart != -1){ //Had text
-            val subText = text.substring(textStart)
-            output.add(TextComponent(subText, activeStyling))
+            addOutput(text.substring(textStart), activeStyling)
         }
 
         TagResolvers.flushAll()
@@ -105,7 +127,7 @@ object MiniMessageParser {
     private fun applyStyling(tag: TagResolver, context: TagContext, closing: Boolean): TextStyling? {
         if(tag == TagResolvers.RESET){
             if(!closing) resetAllTags()
-            return TextStyling() //Reset to default
+            return TextStyling.default //Reset to default
         }
 
         if(closing){

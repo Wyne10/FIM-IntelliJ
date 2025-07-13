@@ -4,14 +4,19 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
 import java.awt.Color
 
-object TranslatableFallbackTagResolver : TagResolver() {
+object TranslatableFallbackTagResolver : TextTagResolver() {
     private val tags = hashSetOf("translate_or", "lang_or", "tr_or")
 
     override fun apply(styling: TextStyling, tag: TagContext) {
+
     }
 
     override fun isValid(tag: TagContext): Boolean {
-        return tag.first() in tags
+        return tag.size >= 3 && tag.first() in tags
+    }
+
+    override fun getText(tag: TagContext): String? {
+        return tag.slices[2]
     }
 
 }

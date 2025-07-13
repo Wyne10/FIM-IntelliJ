@@ -1,11 +1,12 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser.resolver
 
 import com.intellij.ui.ColorHexUtil
+import fish.crafting.fimplugin.plugin.minimessage.parser.CommonTagStacks
 import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
 import java.awt.Color
 
-object ColorTagResolver : TagResolver() {
+object ColorTagResolver : TagResolver(CommonTagStacks.COLOR) {
 
     val colorMap = mapOf(
         "black" to Color(0x000000),

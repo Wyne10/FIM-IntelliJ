@@ -4,6 +4,12 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TagResolver
 
 class TagStack(val tags: ArrayDeque<TagContext> = ArrayDeque()) {
 
+    private var registered = false
+    val isRegistered get() = registered
+    fun markRegistered() {
+        registered = true
+    }
+
     fun removeStartingTop(tag: TagContext): Boolean {
         val iterator = tags.listIterator(tags.size)
         while(iterator.hasPrevious()){
@@ -29,11 +35,15 @@ class TagStack(val tags: ArrayDeque<TagContext> = ArrayDeque()) {
         tags.removeIf { it.index > index }
     }
 
-    fun style(resolver: TagResolver, styling: TextStyling) {
+    fun style(styling: TextStyling) {
         if(tags.isEmpty()) return
         for (context in tags) {
-            resolver.apply(styling, context)
+            context.resolver?.apply(styling, context)
         }
+    }
+
+    fun resetCaches() {
+        tags.forEach { it.cachedColor = null }
     }
 
     fun addToTop(context: TagContext) {
@@ -41,6 +51,7 @@ class TagStack(val tags: ArrayDeque<TagContext> = ArrayDeque()) {
     }
 
     fun flush() {
+        resetCaches()
         tags.clear()
     }
 

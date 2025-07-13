@@ -4,13 +4,14 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
 import java.awt.Color
 
-object InsertionTagResolver : TagResolver() {
+object HoverTagResolver : TagResolver() {
 
     override fun apply(styling: TextStyling, tag: TagContext) {
     }
 
     override fun isValid(tag: TagContext): Boolean {
-        return tag.size == 2 && tag.first() == "insertion"
+        val first = tag.first()
+        return first == "hover"
     }
 
 }

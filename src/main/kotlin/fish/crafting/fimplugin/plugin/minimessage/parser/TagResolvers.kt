@@ -1,13 +1,19 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser
 
 import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.*
-import org.apache.xml.resolver.apps.resolver
 
 object TagResolvers {
 
     private val allResolvers = arrayListOf<TagResolver>()
+    private val allStacks = arrayListOf<TagStack>()
     private fun <T : TagResolver> register(resolver: T): TagResolver {
         allResolvers.add(resolver)
+
+        val stack = resolver.stack
+        if(!stack.isRegistered) {
+            allStacks.addLast(stack)
+        }
+
         return resolver
     }
 
@@ -20,7 +26,7 @@ object TagResolvers {
     }
 
     fun style(styling: TextStyling) {
-        allResolvers.forEach { it.stack.style(it, styling) }
+        allStacks.forEach { it.style(styling) }
     }
 
     fun removeAllHigherThan(index: Int) {
@@ -49,5 +55,7 @@ object TagResolvers {
     val SELECTOR = register(SelectorTagResolver)
     val GRADIENT = register(GradientTagResolver)
     val RESET = register(ResetTagResolver)
+    val RAINBOW = register(RainbowTagResolver)
+    val KEY = register(KeyTagResolver)
 
 }

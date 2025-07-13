@@ -1,9 +1,18 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser
 
+import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TagResolver
 import org.jsoup.internal.StringUtil
 import kotlin.math.min
 
 class TagContext(val slices: List<String>, val index: Int) {
+
+    var resolver: TagResolver? = null
+
+    //Gradients break if a structure like this is used
+    //<gradient> ABC <bold> DEF
+    //because each element [ABC, DEF] is treated separately, and gradients were rendered separately.
+    //Instead, we track the rendering in the ColorElement, and we need all elements [ABC, DEF] to have the same object
+    var cachedColor: TextStyling.LengthTrackingColorElement? = null
 
     constructor(tag: String, index: Int) : this(tag.split(':'), index)
 
@@ -45,6 +54,14 @@ class TagContext(val slices: List<String>, val index: Int) {
 
     override fun toString(): String {
         return StringUtil.join(slices, ":")
+    }
+
+    override fun hashCode(): Int {
+        var result = index
+        result = 31 * result + slices.hashCode()
+        result = 31 * result + (cachedColor?.hashCode() ?: 0)
+        result = 31 * result + size
+        return result
     }
 
 

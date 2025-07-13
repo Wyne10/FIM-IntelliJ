@@ -6,12 +6,15 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextComponent
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
+import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.GradientTagResolver
+import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.RainbowTagResolver
 import fish.crafting.fimplugin.plugin.util.ObfuscationUtil
 import java.awt.*
 
 class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                           private var text: String,
                           private var width: Int = 1,
+                          private var renderIndex: Int = 0,
                           private var attachedTimer: Boolean = false): EditorCustomElementRenderer {
 
     constructor(text: String) : this(MiniMessageParser.parseOrLegacy(text), text)
@@ -51,6 +54,8 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
     }
 
     override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+        renderIndex++
+
         val g2 = g as Graphics2D
         val editor = inlay.editor
 
@@ -63,15 +68,15 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
 
         for (component in components) {
-            val baseFont = if(component.styling.bold){
+            val baseFont = if (component.styling.bold) {
                 MinecraftFont.bold
-            }else{
+            } else {
                 MinecraftFont.font
             }
 
             var text = component.content
 
-            if(component.styling.obfuscated) {
+            if (component.styling.obfuscated) {
                 val metrics = g.getFontMetrics(baseFont)
                 text = ObfuscationUtil.obfuscate(g, metrics, baseFont, text)
             }
@@ -82,35 +87,60 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
             // Drawing Text
 
             val baseColor = component.styling.color
-            var w = 0
-            if(baseColor is TextStyling.GradientColorElement) {
-                var i = 0
-                val textLen = text.length
-                for (ch in text) {
-                    val letter = ch.toString()
-                    val color = baseColor.getColor(textLen, i)
 
-                    drawText(g2, x + 2, y + 2, letter, component.styling.getShadow(color), component.styling)
-                    w = drawText(g2, x, y, letter, color, component.styling)
-
-                    x += w
-                    width += w
-                    i++
+            val addedWidth = when(baseColor) {
+                is GradientTagResolver.GradientColorElement -> {
+                    renderIndividuallyColoredChars(g2, text, x, y, component, baseColor::getColor)
                 }
-            }else if(baseColor is TextStyling.SolidColorElement) {
-                val color = baseColor.color
-                drawText(g2, x + 2, y + 2, text, component.styling.getShadow(color), component.styling)
-                w = drawText(g2, x, y, text, color, component.styling)
-
-                x += w
-                width += w
+                is RainbowTagResolver.RainbowColorElement -> {
+                    renderIndividuallyColoredChars(g2, text, x, y, component, baseColor::getColor)
+                }
+                is TextStyling.SolidColorElement -> {
+                    renderSolidColor(g2, text, baseColor, x, y, component)
+                }
+                else -> 0
             }
+
+            x += addedWidth
+            width += addedWidth
 
         }
 
         val updateWidth = this.width != width
         this.width = width
         if(updateWidth) inlay.update()
+    }
+
+    //Yes I know this is terrible
+    private fun renderIndividuallyColoredChars(g2: Graphics2D,
+                                               text: String,
+                                               x: Int, y: Int,
+                                               component: TextComponent,
+                                               colorGetter: (Int, Int) -> Color): Int{
+        var width = 0
+        var x2 = x
+        for (ch in text) {
+            val letter = ch.toString()
+            val color = colorGetter.invoke(1, renderIndex)
+
+            drawText(g2, x2 + 2, y + 2, letter, component.styling.getShadow(color), component.styling)
+            val w = drawText(g2, x2, y, letter, color, component.styling)
+
+            x2 += w
+            width += w
+        }
+
+        return width
+    }
+
+    private fun renderSolidColor(g2: Graphics2D,
+                                 text: String,
+                                 colorElement: TextStyling.SolidColorElement,
+                                 x: Int, y: Int,
+                                 component: TextComponent): Int {
+        val color = colorElement.color
+        drawText(g2, x + 2, y + 2, text, component.styling.getShadow(color), component.styling)
+        return drawText(g2, x, y, text, color, component.styling)
     }
 
     private fun drawText(g2: Graphics2D, x: Int, y: Int, text: String, color: Color, styling: TextStyling): Int {

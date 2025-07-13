@@ -4,13 +4,17 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
 import java.awt.Color
 
-object InsertionTagResolver : TagResolver() {
+object KeyTagResolver : TextTagResolver() {
 
     override fun apply(styling: TextStyling, tag: TagContext) {
     }
 
     override fun isValid(tag: TagContext): Boolean {
-        return tag.size == 2 && tag.first() == "insertion"
+        return tag.size > 1 && tag.first() == "key"
+    }
+
+    override fun getText(tag: TagContext): String? {
+        return tag.last() //Eventually this will work maybe
     }
 
 }

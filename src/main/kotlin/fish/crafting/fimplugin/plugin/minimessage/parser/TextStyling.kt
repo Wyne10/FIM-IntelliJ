@@ -32,42 +32,48 @@ class TextStyling(var color: ColorElement = SolidColorElement(Color.WHITE),
         obfuscated = false
     }
 
-    class GradientColorElement(val colors: Array<Color>, var phase: Double) : ColorElement() {
-
-        init {
-            if (phase < 0) {
-                phase = 1 + phase // [-1, 0) -> [0, 1)
-                Collections.reverse(listOf<Color>(*this.colors))
-            } else {
-                phase = phase
-            }
-            phase *= (colors.size - 1).toDouble()
-        }
-
-        fun getColor(textLength: Int, index: Int): Color {
-            val position: Double = ((index * getMultiplier(textLength)) + phase)
-            val lowUnclamped = floor(position).toInt()
-
-            val high = ceil(position).toInt() % this.colors.size
-            val low = lowUnclamped % this.colors.size
-
-            return ColorUtil.lerp(position.toFloat() - lowUnclamped, this.colors[low], this.colors[high])
-        }
-
-        private fun getMultiplier(length: Int): Double {
-            return if (length == 1) {
-                0.0
-            } else {
-                (colors.size - 1).toDouble() / (length - 1)
-            }
-        }
-    }
-
     class SolidColorElement(val color: Color) : ColorElement() {
 
     }
 
+    /**
+     * Color element that keeps an index-track of the whole text, regardless if it is the top tag.
+     * e.g.
+     * <rainbow> 0123 <red>456 </red> 789 </rainbow>
+     * <rainbow> keeps track of the index of each letter, even the ones in <red>.
+     *
+     * Used to make strict gradients/transitions
+     */
+    open class StrictTextColorElement : LengthTrackingColorElement() {
+        //Width of already processed/rendered text
+        var processedWidth = 0
+        private var rIndex = 0
+
+        protected fun getRealIndexAndProcess(processedLength: Int, renderIndex: Int): Int {
+            if(rIndex != renderIndex) {
+                rIndex = renderIndex
+                processedWidth = 0
+            }
+
+            val realIndex = processedWidth
+            processedWidth += processedLength
+
+            return realIndex
+        }
+    }
+
+    /**
+     * Tracks length of the targeted text
+     */
+    open class LengthTrackingColorElement : ColorElement() {
+        var textLength = 0
+    }
+
     open class ColorElement {
 
+    }
+
+    override fun toString(): String {
+        return "[Color: $color, Shadow: $shadowColor]"
     }
 }
