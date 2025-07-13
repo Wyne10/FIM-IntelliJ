@@ -45,7 +45,7 @@ object TagResolvers {
     val UNDERLINE = register(UnderlinedTagResolver)
     val OBFUSCATED = register(ObfuscatedTagResolver)
     val STRIKETHROUGH = register(StrikethroughTagResolver)
-    val TRANSLATE = register(TranslatableFallbackTagResolver)
+    val TRANSLATE = register(TranslatableTagResolver)
     val TRANSLATE_FALLBACK = register(TranslatableFallbackTagResolver)
     val CLICK = register(ClickTagResolver)
     val INSERTION = register(InsertionTagResolver)

@@ -56,7 +56,8 @@ object MiniMessageParser {
             if(ch == '<'){
                 openIndex = i
             }else if(ch == '>' && openIndex != -1){
-                var tagStr = text.substring(openIndex + 1, i).lowercase()
+                val originalTagStr = text.substring(openIndex + 1, i)
+                var tagStr = originalTagStr.lowercase()
 
                 val closing = tagStr.startsWith("/")
                 if(closing && tagStr.length > 1) tagStr = tagStr.substring(1)
@@ -68,12 +69,22 @@ object MiniMessageParser {
                 //If the tag was resolved correctly, add the previous text in.
                 var success = false
                 if(tag != null){
+                    if(!tag.useLowercaseForApply()){
+                        context.updateSlices(originalTagStr)
+                    }
+
                     context.resolver = tag
                     if(tag is TextTagResolver){
                         if(!closing){ //text tags aren't closable but should be parsed
                             tag.getText(context)?.let{
                                 stringBuilder.insert(i + 1, it)
                                 text = stringBuilder.toString()
+                                success = true
+
+                                if(textStart != -1){ //Had text
+                                    addOutput(text.substring(textStart, openIndex), activeStyling)
+                                    textStart = -1
+                                }
                             }
                         }
                     }
@@ -101,6 +112,7 @@ object MiniMessageParser {
                 if(!success && textStart == -1){ //Tag wasn't parsed successfully, but we don't have any text yet. Mark this as the start of text then
                     textStart = openIndex
                 }
+
 
                 openIndex = -1 //Mark as not currently in brackets
             }else if(openIndex == -1 && textStart == -1){ //Not inside bracket, and no text present yet

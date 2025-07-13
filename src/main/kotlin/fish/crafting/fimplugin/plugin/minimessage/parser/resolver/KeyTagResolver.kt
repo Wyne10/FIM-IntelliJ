@@ -17,4 +17,6 @@ object KeyTagResolver : TextTagResolver() {
         return tag.last() //Eventually this will work maybe
     }
 
+    override fun useLowercaseForApply() = false
+
 }

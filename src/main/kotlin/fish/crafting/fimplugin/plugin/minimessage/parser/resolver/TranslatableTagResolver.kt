@@ -18,4 +18,5 @@ object TranslatableTagResolver : TextTagResolver() {
         return tag.slices[1]
     }
 
+    override fun useLowercaseForApply() = false
 }

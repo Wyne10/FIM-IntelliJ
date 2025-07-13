@@ -4,7 +4,7 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TagResolver
 import org.jsoup.internal.StringUtil
 import kotlin.math.min
 
-class TagContext(val slices: List<String>, val index: Int) {
+class TagContext(var slices: List<String>, val index: Int) {
 
     var resolver: TagResolver? = null
 
@@ -15,6 +15,10 @@ class TagContext(val slices: List<String>, val index: Int) {
     var cachedColor: TextStyling.LengthTrackingColorElement? = null
 
     constructor(tag: String, index: Int) : this(tag.split(':'), index)
+
+    fun updateSlices(str: String) {
+        slices = str.split(":")
+    }
 
     fun last(): String = slices.last()
     fun first(): String = slices.first()

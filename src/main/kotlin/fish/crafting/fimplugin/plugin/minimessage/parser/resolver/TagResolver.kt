@@ -8,5 +8,6 @@ abstract class TagResolver(val stack: TagStack = TagStack()) {
 
     abstract fun apply(styling: TextStyling, tag: TagContext)
     abstract fun isValid(tag: TagContext): Boolean
+    open fun useLowercaseForApply() = true
 
 }
