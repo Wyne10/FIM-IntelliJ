@@ -48,6 +48,7 @@ object TagResolvers {
     val GRADIENT = register(GradientTagResolver)
     val RAINBOW = register(RainbowTagResolver)
     val RESET = register(ResetTagResolver)
+    val NEWLINE = register(NewlineTagResolver)
     val TRANSITION = register(TransitionTagResolver)
     val TRANSLATE = register(TranslatableTagResolver)
     val TRANSLATE_FALLBACK = register(TranslatableFallbackTagResolver)
