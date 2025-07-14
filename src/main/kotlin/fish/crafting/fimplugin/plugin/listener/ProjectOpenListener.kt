@@ -1,11 +1,13 @@
 package fish.crafting.fimplugin.plugin.listener
 
+import com.google.protobuf.TextFormat
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import fish.crafting.fimplugin.connection.netty.ConnectionManager
 import fish.crafting.fimplugin.connection.packetsystem.PacketManager
 import fish.crafting.fimplugin.plugin.minimessage.MinecraftFont
+import fish.crafting.fimplugin.plugin.minimessage.TextFormatRegistryService
 
 class ProjectOpenListener : ProjectActivity {
     //Theoretically, it would make more sense to run this on application startup
@@ -25,5 +27,7 @@ class ProjectOpenListener : ProjectActivity {
             FileEditorManagerListener.FILE_EDITOR_MANAGER,
             FileChangedListener
         )
+
+        TextFormatRegistryService.instance.handleProjectOpen(project)
     }
 }
