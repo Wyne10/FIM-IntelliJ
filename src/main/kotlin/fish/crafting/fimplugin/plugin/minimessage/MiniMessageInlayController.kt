@@ -137,7 +137,8 @@ class MiniMessageInlayController {
         }
     }
 
-    fun collapse(editor: Editor, expression: PsiElement) {
+    fun collapse(editor: Editor, expression: PsiElement, text: String) {
+        if(!shouldCollapse(expression, text)) return
         val foldingModel = editor.foldingModel
 
         val startOffset = expression.startOffset
@@ -326,6 +327,7 @@ class MiniMessageInlayController {
         val inlayModel = editor.inlayModel
 
         removeInlineInlay(editor, expression, false)
+        if(!shouldShowInlineInlay(expression, text)) return
 
         var appliedRenderer: MiniMessageRenderer? = null
         var appliedInlay: Inlay<*>? = null
@@ -336,12 +338,12 @@ class MiniMessageInlayController {
             if(hadTags.get()){
                 appliedRenderer = MiniMessageRenderer(parseOrLegacy, text)
                 appliedInlay = inlayModel.addInlineElement(offset, true, appliedRenderer)
-                collapse(editor, expression)
+                collapse(editor, expression, text)
             }
         }else{
             appliedRenderer = MiniMessageRenderer(text)
             appliedInlay = inlayModel.addInlineElement(offset, true, appliedRenderer)
-            collapse(editor, expression)
+            collapse(editor, expression, text)
         }
 
         attachObfuscatedTimer(appliedRenderer, appliedInlay)
@@ -410,6 +412,16 @@ class MiniMessageInlayController {
                 bgtTracker.failed.add(expression)
             }
         }
+
+    }
+
+    private fun shouldCollapse(element: PsiElement, text: String): Boolean {
+        return shouldShowInlineInlay(element, text)
+    }
+
+    private fun shouldShowInlineInlay(element: PsiElement, text: String): Boolean {
+        if(text.isBlank()) return false //Don't collapse "" so that it shows up
+        return true
 
     }
 
