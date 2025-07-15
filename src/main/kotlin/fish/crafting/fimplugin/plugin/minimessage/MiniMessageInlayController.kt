@@ -1,13 +1,17 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
+import ai.grazie.utils.attributes.value
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
@@ -17,6 +21,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.AppExecutorUtil
 import fish.crafting.fimplugin.plugin.listener.PluginDisposable
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.util.DataKeys
@@ -361,12 +366,27 @@ class MiniMessageInlayController {
             .filter { it.renderer is MiniMessageRenderer }
             .forEach { it.dispose() }
 
-        file.visitExpressions {
-            updateInlineFor(editor, it)
-        }
+
+        //Batch BGT checks so we don't request a separate action for each literal
+        ReadAction.nonBlocking<BGTInlayTracker> {
+            val bgtTracker = BGTInlayTracker()
+            file.visitExpressions {
+                updateInlineFor(editor, it, bgtTracker = bgtTracker)
+            }
+
+            bgtTracker
+        }.finishOnUiThread(ApplicationManager.getApplication().defaultModalityState) { tracker ->
+            tracker.successful.forEach { updateInlineStringLiteral(editor, it.first, it.second) }
+            tracker.failed.forEach { removeInlineInlay(editor, it) }
+
+            tracker.clear()
+        }.submit(AppExecutorUtil.getAppExecutorService())
     }
 
-    fun updateInlineFor(editor: Editor, expression: PsiElement, checkBlockInline: Boolean = true) {
+    fun updateInlineFor(editor: Editor,
+                        expression: PsiElement,
+                        checkBlockInline: Boolean = true,
+                        bgtTracker: BGTInlayTracker? = null) {
         val value = expression.getLiteralValue()
         if(value !is String) return
 
@@ -375,13 +395,22 @@ class MiniMessageInlayController {
             return
         }
 
-        expression.checkMCFormatAndRun(this) { result ->
-            if(result){
-                updateInlineStringLiteral(editor, value, expression)
+        if(bgtTracker == null) { //This is run from EDT, so we use checkMCFormatAndRun() to automatically do BGT Checks + EDT Updates
+            expression.checkMCFormatAndRun(this) { result ->
+                if(result){
+                    updateInlineStringLiteral(editor, value, expression)
+                }else{
+                    removeInlineInlay(editor, expression)
+                }
+            }
+        }else { //This is run from a BGT batch, store the results in the tracker
+            if(expression.checkMCFormatBGT(this)){
+                bgtTracker.successful.add(Pair(value, expression))
             }else{
-                removeInlineInlay(editor, expression)
+                bgtTracker.failed.add(expression)
             }
         }
+
     }
 
     fun handleDocumentChanged(editor: Editor) {
@@ -390,5 +419,13 @@ class MiniMessageInlayController {
 
     fun handleCaretChanged(editor: Editor) {
         handleCaretUpdate(editor)
+    }
+
+    data class BGTInlayTracker(val successful: ArrayList<Pair<String, PsiElement>> = arrayListOf(),
+                               val failed: ArrayList<PsiElement> = arrayListOf()) {
+        fun clear() {
+            successful.clear()
+            failed.clear()
+        }
     }
 }

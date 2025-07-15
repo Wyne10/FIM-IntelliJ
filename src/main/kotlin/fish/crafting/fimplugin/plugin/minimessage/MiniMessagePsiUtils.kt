@@ -36,14 +36,20 @@ import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.yaml.psi.YAMLQuotedText
 import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor
 
+fun PsiElement.checkMCFormatBGT(controller: MiniMessageInlayController): Boolean {
+    if(DumbService.isDumb(project)) return false
+    if(quickShouldFormatMCText(controller)) return true
+    return shouldFormatMCText()
+}
+
 fun PsiElement.checkMCFormatAndRun(controller: MiniMessageInlayController, run: (Boolean) -> Unit) {
-    if(quickShouldFormatMCText(controller)) {
-        run.invoke(true)
+    if(DumbService.isDumb(project)) {
+        run.invoke(false)
         return
     }
 
-    if(DumbService.isDumb(project)) {
-        run.invoke(false)
+    if(quickShouldFormatMCText(controller)) {
+        run.invoke(true)
         return
     }
 

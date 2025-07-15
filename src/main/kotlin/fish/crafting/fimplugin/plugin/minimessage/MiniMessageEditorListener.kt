@@ -1,5 +1,7 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.CaretEvent
@@ -16,6 +18,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.AppExecutorUtil
 import fish.crafting.fimplugin.plugin.listener.PluginDisposable
 import fish.crafting.fimplugin.plugin.util.DataKeys
 import fish.crafting.fimplugin.plugin.util.DataKeys.MM_LISTENERS_REGISTERED
@@ -32,8 +35,10 @@ class MiniMessageEditorListener : EditorFactoryListener {
         registerListeners(editor)
 
         //this COULD break shit
-        controller.updateAllInlines(editor)
-        controller.handleCaretChanged(editor)
+        if(!editor.isDumb){
+            controller.updateAllInlines(editor)
+            controller.handleCaretChanged(editor)
+        }
     }
 
     override fun editorReleased(event: EditorFactoryEvent) {
@@ -70,11 +75,14 @@ class MiniMessageEditorListener : EditorFactoryListener {
 
         project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
             override fun selectionChanged(event: FileEditorManagerEvent) {
+                /* Bad because the editor is disposed as of this point
+                Instead, we run this on editorReleased which works fine.
+
                 if(event.oldEditor is TextEditor){
                     val oldEditor = (event.oldEditor as TextEditor).editor
                     val oldController = oldEditor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
                     oldController.removeFolds(oldEditor)
-                }
+                }*/
 
                 onFileOpen(event.newEditor)
             }
@@ -85,7 +93,9 @@ class MiniMessageEditorListener : EditorFactoryListener {
             }
 
             override fun exitDumbMode() { //Indexing complete, rebuild the shown class
-                onFileOpen(FileEditorManager.getInstance(project).focusedEditor)
+                ReadAction.nonBlocking<Unit> {
+                    onFileOpen(FileEditorManager.getInstance(project).focusedEditor)
+                }.submit(AppExecutorUtil.getAppExecutorService())
             }
         })
     }
@@ -93,10 +103,15 @@ class MiniMessageEditorListener : EditorFactoryListener {
     private fun onFileOpen(fileEditor: FileEditor?){
         if(fileEditor is TextEditor){
             val newEditor = fileEditor.editor
-            val newController = newEditor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
 
-            newController.updateAllInlines(newEditor)
-            newController.handleCaretChanged(newEditor)
+            if(!newEditor.isDumb){
+                val newController = newEditor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
+
+                newController.updateAllInlines(newEditor)
+                newController.handleCaretChanged(newEditor)
+            }
         }
     }
 }
+
+val Editor.isDumb: Boolean get() = if(project == null) false else DumbService.isDumb(project!!)
