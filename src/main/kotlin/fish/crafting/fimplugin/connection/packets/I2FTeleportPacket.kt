@@ -3,6 +3,7 @@ package fish.crafting.fimplugin.connection.packets
 import fish.crafting.fimplugin.connection.packetsystem.InPacket
 import fish.crafting.fimplugin.connection.packetsystem.OutPacket
 import fish.crafting.fimplugin.connection.packetsystem.PacketId
+import fish.crafting.fimplugin.plugin.util.mc.BoundingBox
 import fish.crafting.fimplugin.plugin.util.mc.Location
 import fish.crafting.fimplugin.plugin.util.mc.Vector
 import io.netty.buffer.ByteBufOutputStream
@@ -17,6 +18,7 @@ class I2FTeleportPacket(val x: Double,
 
     constructor(vector: Vector) : this(vector.x, vector.y, vector.z)
     constructor(location: Location) : this(location.x, location.y, location.z, location.pitch, location.yaw, location.world)
+    constructor(box: BoundingBox) : this(box.centerX, box.centerY, box.centerZ)
 
     companion object {
         private val ID = PacketId("i2f_tp")

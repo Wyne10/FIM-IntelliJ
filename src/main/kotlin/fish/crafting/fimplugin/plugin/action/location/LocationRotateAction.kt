@@ -1,4 +1,4 @@
-package fish.crafting.fimplugin.plugin.action.boundingbox
+package fish.crafting.fimplugin.plugin.action.location
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,10 +9,10 @@ import fish.crafting.fimplugin.connection.packets.I2FTeleportPacket
 import fish.crafting.fimplugin.connection.tool.MinecraftEditorTool
 import fish.crafting.fimplugin.connection.tool.ValueEditManager
 import fish.crafting.fimplugin.plugin.action.ConstructorBasedAction
-import fish.crafting.fimplugin.plugin.util.ifBoundingBox
+import fish.crafting.fimplugin.plugin.util.ifLocation
 import org.jetbrains.kotlin.psi.KtCallExpression
 
-class BoundingBoxMoveAction : ConstructorBasedAction() {
+class LocationRotateAction : ConstructorBasedAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
@@ -22,10 +22,9 @@ class BoundingBoxMoveAction : ConstructorBasedAction() {
         e: AnActionEvent,
         newExpression: PsiCallExpression
     ) {
-
-        newExpression.ifBoundingBox {
+        newExpression.ifLocation {
             ValueEditManager.psiElement = newExpression
-            I2FEditPacket(it, MinecraftEditorTool.MOVE).sendToLatest()
+            I2FEditPacket(it, MinecraftEditorTool.ROTATE).sendToLatest()
             I2FTeleportPacket(it).sendToLatest()
             ProgramFocuser.focusLatest()
         }
@@ -35,9 +34,9 @@ class BoundingBoxMoveAction : ConstructorBasedAction() {
         e: AnActionEvent,
         callExpression: KtCallExpression
     ) {
-        callExpression.ifBoundingBox {
+        callExpression.ifLocation {
             ValueEditManager.psiElement = callExpression
-            I2FEditPacket(it, MinecraftEditorTool.MOVE).sendToLatest()
+            I2FEditPacket(it, MinecraftEditorTool.ROTATE).sendToLatest()
             I2FTeleportPacket(it).sendToLatest()
             ProgramFocuser.focusLatest()
         }

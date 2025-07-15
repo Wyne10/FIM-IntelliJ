@@ -14,7 +14,6 @@ data class BoundingBox(val x1: Double,
                        val z2: Double) {
 
     companion object {
-
         fun createFromCallExpression(callExpression: UCallExpression): BoundingBox? {
             val args = callExpression.valueArguments
             if(args.isEmpty()) return null
@@ -32,6 +31,11 @@ data class BoundingBox(val x1: Double,
         }
 
     }
+
+
+    val centerX: Double get() = (x2 - x1) / 2.0 + x1
+    val centerY: Double get() = (y2 - y1) / 2.0 + y1
+    val centerZ: Double get() = (z2 - z1) / 2.0 + z1
 
     override fun toString(): String {
         return "[[$x1, $y1, $z1], [$x2, $y2, $z2]]"

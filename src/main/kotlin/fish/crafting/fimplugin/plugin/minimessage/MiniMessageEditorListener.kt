@@ -56,6 +56,7 @@ class MiniMessageEditorListener : EditorFactoryListener {
         EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
             override fun documentChanged(event: DocumentEvent) {
                 val controller = editor.getUserData(DataKeys.INLAY_CONTROLLER) ?: return
+                if(!ApplicationManager.getApplication().isDispatchThread) return //If not EDT
 
                 PsiDocumentManager.getInstance(project).performWhenAllCommitted {
                     controller.handleDocumentChanged(editor)

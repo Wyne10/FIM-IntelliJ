@@ -17,13 +17,13 @@ class BoundingBoxTeleportAction : ConstructorBasedAction() {
         e: AnActionEvent,
         newExpression: PsiCallExpression
     ) {
-        ActionUtils.tpLocation(newExpression, e.inputEvent)
+        ActionUtils.tpBoundingBox(newExpression, e.inputEvent)
     }
 
     override fun ktPerformAction(
         e: AnActionEvent,
         callExpression: KtCallExpression
     ) {
-        ActionUtils.tpLocation(callExpression, e.inputEvent)
+        ActionUtils.tpBoundingBox(callExpression, e.inputEvent)
     }
 }

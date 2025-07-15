@@ -12,7 +12,7 @@ import fish.crafting.fimplugin.plugin.action.ConstructorBasedAction
 import fish.crafting.fimplugin.plugin.util.ifBoundingBox
 import org.jetbrains.kotlin.psi.KtCallExpression
 
-class BoundingBoxMoveAction : ConstructorBasedAction() {
+class BoundingBoxScaleAction : ConstructorBasedAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
         return ActionUpdateThread.BGT
@@ -25,7 +25,7 @@ class BoundingBoxMoveAction : ConstructorBasedAction() {
 
         newExpression.ifBoundingBox {
             ValueEditManager.psiElement = newExpression
-            I2FEditPacket(it, MinecraftEditorTool.MOVE).sendToLatest()
+            I2FEditPacket(it, MinecraftEditorTool.SCALE).sendToLatest()
             I2FTeleportPacket(it).sendToLatest()
             ProgramFocuser.focusLatest()
         }
@@ -37,7 +37,7 @@ class BoundingBoxMoveAction : ConstructorBasedAction() {
     ) {
         callExpression.ifBoundingBox {
             ValueEditManager.psiElement = callExpression
-            I2FEditPacket(it, MinecraftEditorTool.MOVE).sendToLatest()
+            I2FEditPacket(it, MinecraftEditorTool.SCALE).sendToLatest()
             I2FTeleportPacket(it).sendToLatest()
             ProgramFocuser.focusLatest()
         }

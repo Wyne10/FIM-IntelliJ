@@ -95,6 +95,11 @@
             <add-to-group group-id="fim.location_group" anchor="first"/>
         </action>
 
+        <action id="fim.rot_loc" class="fish.crafting.fimplugin.plugin.action.location.LocationRotateAction"
+                text="Rotate Location">
+            <add-to-group group-id="fim.location_group" anchor="first"/>
+        </action>
+
         <action id="fim.tp_box" class="fish.crafting.fimplugin.plugin.action.boundingbox.BoundingBoxTeleportAction"
                 text="Teleport to BoundingBox">
             <add-to-group group-id="fim.boundingbox_group" anchor="first"/>
@@ -102,6 +107,11 @@
 
         <action id="fim.move_box" class="fish.crafting.fimplugin.plugin.action.boundingbox.BoundingBoxMoveAction"
                 text="Move BoundingBox">
+            <add-to-group group-id="fim.boundingbox_group" anchor="first"/>
+        </action>
+
+        <action id="fim.scale_box" class="fish.crafting.fimplugin.plugin.action.boundingbox.BoundingBoxScaleAction"
+                text="Scale BoundingBox">
             <add-to-group group-id="fim.boundingbox_group" anchor="first"/>
         </action>
 

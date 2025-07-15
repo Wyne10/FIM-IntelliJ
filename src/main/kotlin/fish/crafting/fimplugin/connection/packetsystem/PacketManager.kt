@@ -1,6 +1,7 @@
 package fish.crafting.fimplugin.connection.packetsystem
 
 import fish.crafting.fimplugin.connection.netty.MinecraftHandlerInstance
+import fish.crafting.fimplugin.connection.packets.F2IDoBoundingBoxEditPacket
 import fish.crafting.fimplugin.connection.packets.F2IDoLocationEditPacket
 import fish.crafting.fimplugin.connection.packets.F2IDoVectorEditPacket
 import fish.crafting.fimplugin.connection.packets.F2IFocusPacket
@@ -20,6 +21,7 @@ object PacketManager {
         register(PacketId("f2i_edit_vector"), F2IDoVectorEditPacket)
         register(PacketId("f2i_edit_location"), F2IDoLocationEditPacket)
         register(PacketId("f2i_mc_focused"), F2IMinecraftFocusedPacket)
+        register(PacketId("f2i_edit_boundingbox"), F2IDoBoundingBoxEditPacket)
     }
 
     fun handleReceivedPacket(handler: MinecraftHandlerInstance, buf: ByteBuf) {

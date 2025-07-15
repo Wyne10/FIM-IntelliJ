@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.toUElementOfType
 
 object ReplaceUtil {
 
@@ -72,6 +73,59 @@ object ReplaceUtil {
             addOrModify(callExpr, args, index, pitch.toString() + "f", doublePredicate(pitch.toDouble()))
         }
     }
+
+    fun modifyBoundingBox(callExpr: UCallExpression,
+                          x1: Double, y1: Double, z1: Double,
+                          x2: Double, y2: Double, z2: Double,
+                          kotlin: Boolean) {
+        ApplicationManager.getApplication().invokeLater {
+            if(kotlin){
+                ReadAction.run<RuntimeException>{
+                    modifyBoundingBox0(callExpr, x1, y1, z1, x2, y2, z2)
+                }
+            }else{
+                modifyBoundingBox0(callExpr, x1, y1, z1, x2, y2, z2)
+            }
+        }
+    }
+
+    private fun modifyBoundingBox0(callExpr: UCallExpression,
+                                   x1: Double, y1: Double, z1: Double,
+                                   x2: Double, y2: Double, z2: Double){
+        val replaceWithConstructor = when (callExpr.kind) {
+            UastCallKind.METHOD_CALL -> { //.of
+                true
+            }
+            UastCallKind.CONSTRUCTOR_CALL -> {
+                false
+            }
+            else -> {
+                return
+            }
+        }
+
+        var source = callExpr.sourcePsi ?: return
+        var aCallExpr = callExpr
+
+        WriteCommandAction.runWriteCommandAction(source.project) {
+            if(replaceWithConstructor) {
+                source = source.replaceWithEmptyConstructor() ?: return@runWriteCommandAction
+                aCallExpr = source.toUElementOfType<UCallExpression>() ?: return@runWriteCommandAction
+            }
+
+            val args = aCallExpr.valueArguments
+
+            var index = 0
+
+            addOrModify(aCallExpr, args, index++, x1.toString(), doublePredicate(x1))
+            addOrModify(aCallExpr, args, index++, y1.toString(), doublePredicate(y1))
+            addOrModify(aCallExpr, args, index++, z1.toString(), doublePredicate(z1))
+            addOrModify(aCallExpr, args, index++, x2.toString(), doublePredicate(x2))
+            addOrModify(aCallExpr, args, index++, y2.toString(), doublePredicate(y2))
+            addOrModify(aCallExpr, args, index++, z2.toString(), doublePredicate(z2))
+        }
+    }
+
 
     private fun addOrModify(callExpr: UCallExpression,
                             args: List<UExpression>,

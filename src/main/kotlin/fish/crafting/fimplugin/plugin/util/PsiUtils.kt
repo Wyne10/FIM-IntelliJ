@@ -1,12 +1,17 @@
 package fish.crafting.fimplugin.plugin.util
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import fish.crafting.fimplugin.plugin.util.javakotlin.JavaKotlinUtil
 import fish.crafting.fimplugin.plugin.util.javakotlin.isJava
 import fish.crafting.fimplugin.plugin.util.javakotlin.isKotlin
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.uast.UExpression
@@ -75,6 +80,34 @@ fun PsiElement.add(newExpression: String, addCommaAndWhitespace: Boolean = false
         val newExpr = factory.createExpression(newExpression)
         this.add(newExpr)
     }
+}
+
+fun PsiElement.replaceWithEmptyConstructor(): PsiElement? {
+    var element = this
+    val newExprText = when (this) {
+        is PsiMethodCallExpression -> {
+            val text = methodExpression.qualifierExpression?.text ?: return null
+            "new $text()"
+        }
+
+        is KtCallExpression -> {
+            val text = (parent as? KtDotQualifiedExpression)?.receiverExpression?.text
+            element = parent
+            if (text != null) "$text()" else return null
+        }
+
+        else -> return null
+    }
+
+    return if (element.language.isJava) {
+        val factory = JavaPsiFacade.getElementFactory(project)
+        val newExpr = factory.createExpressionFromText(newExprText, this)
+        element.replace(newExpr)
+    } else if (element.language.isKotlin) {
+        val factory = KtPsiFactory(project)
+        val newExpr = factory.createExpression(newExprText)
+        element.replace(newExpr)
+    }else null
 }
 
 fun PsiNewExpression.getExpressionList(): PsiExpressionList? {

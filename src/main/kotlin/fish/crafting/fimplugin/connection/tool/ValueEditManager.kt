@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
  */
 object ValueEditManager {
 
+    //TODO change this to use cached PsiElements
+    //Shouldn't be a problem for now as any MC edits get discarded if you focus IntelliJ
     var psiElement: PsiElement? = null
 
 }
