@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
+import fish.crafting.fimplugin.connection.netty.ConnectionManager
 import fish.crafting.fimplugin.plugin.assets.FIMAssets
 import fish.crafting.fimplugin.plugin.util.DataKeys
 import fish.crafting.fimplugin.plugin.util.LineMarkerUtil
@@ -24,6 +25,7 @@ class VectorLineMarkerProvider : LineMarkerProviderDescriptor(), GutterIconNavig
     override fun getIcon() = FIMAssets.VECTOR
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        if(!ConnectionManager.hasConnection()) return null
         if(!element.isLeafIdentifier()) return null
 
         val constructor = LineMarkerUtil.getConstructorFromLeaf(element) ?: return null
