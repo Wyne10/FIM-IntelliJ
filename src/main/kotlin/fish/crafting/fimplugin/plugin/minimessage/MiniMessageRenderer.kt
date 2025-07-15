@@ -1,7 +1,9 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextComponent
@@ -81,7 +83,7 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                 text = ObfuscationUtil.obfuscate(g, metrics, baseFont, text)
             }
 
-            val styledFont = applyStylingToFont(baseFont, component.styling)
+            val styledFont = applyStylingToFont(inlay.editor, baseFont, component.styling)
             g2.font = styledFont
 
             // Drawing Text
@@ -161,10 +163,11 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
         return width
     }
 
-    private fun applyStylingToFont(base: Font, style: TextStyling): Font {
+    private fun applyStylingToFont(editor: Editor, base: Font, style: TextStyling): Font {
+        val fontSize: Int = editor.colorsScheme.editorFontSize
         var styleFlags = Font.PLAIN
         if (style.bold) styleFlags = styleFlags or Font.BOLD
         if (style.italic) styleFlags = styleFlags or Font.ITALIC
-        return base.deriveFont(styleFlags)
+        return base.deriveFont(styleFlags, fontSize.toFloat() + 3f)
     }
 }
