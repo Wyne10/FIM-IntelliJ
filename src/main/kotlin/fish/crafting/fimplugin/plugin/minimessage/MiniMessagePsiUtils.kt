@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiBinaryExpression
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
@@ -127,7 +128,13 @@ private fun PsiElement.getRuntimeContainingClass(): PsiClass? {
 
 private fun PsiElement.resolveMethodFromLiteral(): PsiMethod? {
     if(this.language.isJava){
-        val exprList = parent as? PsiExpressionList ?: return null
+        var exprList = parent as? PsiExpressionList
+        if(exprList == null && parent is PsiBinaryExpression) { //"" + ""
+           exprList = parent.parent as? PsiExpressionList
+        }
+
+        exprList ?: return null
+
         val call = exprList.parent as? PsiMethodCallExpression ?: return null
         return call.resolveMethod()
     }else if(this.language.isKotlin){
