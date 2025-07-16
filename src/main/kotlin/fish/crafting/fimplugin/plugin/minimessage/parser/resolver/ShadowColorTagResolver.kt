@@ -1,7 +1,6 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser.resolver
 
-import com.intellij.java.compiler.charts.ui.alpha
-import com.intellij.ui.ColorHexUtil
+import com.intellij.ui.ColorUtil
 import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
 import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.ColorTagResolver.colorMap
@@ -30,7 +29,7 @@ object ShadowColorTagResolver : TagResolver() {
         }
 
         if(color != null){
-            color = color.alpha(alpha)
+            color = ColorUtil.withAlpha(color, alpha)
         }
 
         styling.shadowColor = color
