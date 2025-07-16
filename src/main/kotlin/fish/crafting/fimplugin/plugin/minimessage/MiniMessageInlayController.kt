@@ -24,6 +24,7 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.AppExecutorUtil
+import fish.crafting.fimplugin.plugin.action.inlay.isOurs
 import fish.crafting.fimplugin.plugin.listener.PluginDisposable
 import fish.crafting.fimplugin.plugin.minimessage.parser.MiniMessageParser
 import fish.crafting.fimplugin.plugin.util.DataKeys
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class MiniMessageInlayController {
 
     var currentlyEditing: SmartPsiElementPointer<PsiElement>? = null
+    var lastCaretExpression: SmartPsiElementPointer<PsiElement>? = null
     private var blockInlay: Inlay<*>? = null
 
     companion object {
@@ -67,11 +69,13 @@ class MiniMessageInlayController {
     }
 
     fun dispose(editor: Editor) {
+        println("Disposed!")
         clearCaches()
         blockInlay?.dispose()
         blockInlay = null
 
         removeFolds(editor)
+        removeAllInlineInlays(editor)
     }
 
     fun removeFolds(editor: Editor) {
@@ -90,6 +94,7 @@ class MiniMessageInlayController {
      */
     fun clearCaches() {
         setCache(null)
+        lastCaretExpression = null
     }
 
     fun setCache(expression: PsiElement?) {
@@ -139,6 +144,17 @@ class MiniMessageInlayController {
         }
     }
 
+    fun uncollapseOurOnly(editor: Editor, offset: Int) {
+        val foldingModel = editor.foldingModel
+
+        foldingModel.runBatchFoldingOperation {
+            val region = foldingModel.getCollapsedRegionAtOffset(offset - 1)
+            if (region != null && region.placeholderText.isEmpty()) {
+                foldingModel.removeFoldRegion(region)
+            }
+        }
+    }
+
     fun collapse(editor: Editor, expression: PsiElement, text: String) {
         if(!shouldCollapse(expression, text)) return
         val foldingModel = editor.foldingModel
@@ -172,7 +188,9 @@ class MiniMessageInlayController {
                 val changed = renderer.updateText(text)
 
                 if(changed) {
-                    blockInlay!!.update()
+                    onEDTorNow(bgtTracker) {
+                        blockInlay!!.update()
+                    }
                 }
 
                 //If the user is editing text and adds &k, try and add an update timer
@@ -286,9 +304,18 @@ class MiniMessageInlayController {
         }
     }
 
-    fun refreshInlays(editor: Editor) {
+    fun refreshInlays(editor: Editor, providedStringLiteral: PsiElement? = null) {
         val project = editor.project ?: return
-        val stringLiteral = getLiteralExpression(editor)
+        val stringLiteral = providedStringLiteral ?: getLiteralExpression(editor)
+
+        var newCaretElement = false
+        if(stringLiteral == null){
+            lastCaretExpression = null
+        }else if(lastCaretExpression == null || lastCaretExpression?.element != stringLiteral) {
+            lastCaretExpression = SmartPointerManager.createPointer(stringLiteral)
+            newCaretElement = true
+        }
+
         stringLiteral ?: return
 
         stringLiteral.checkMCFormatAndRun(this) { result ->
@@ -301,6 +328,9 @@ class MiniMessageInlayController {
                 }
             }else{
                 removeBlockInlay(editor)
+                if(newCaretElement){
+                    removeInlayAndFold(editor, editor.caretModel.offset)
+                }
             }
         }
 
@@ -357,21 +387,17 @@ class MiniMessageInlayController {
         val stringLiteral = getLiteralExpression(editor)
 
         if(stringLiteral == null) {
+            lastCaretExpression = null
             removeBlockInlay(editor)
             return
         }
 
-        refreshInlays(editor)
+        refreshInlays(editor, stringLiteral)
     }
 
     fun updateAllInlines(editor: Editor){
         val project = editor.project ?: return
         val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-
-        editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-            .filter { it.renderer is MiniMessageRenderer }
-            .forEach { it.dispose() }
-
 
         //Batch BGT checks so we don't request a separate action for each literal
         ReadAction.nonBlocking<BGTInlayTracker> {
@@ -382,6 +408,10 @@ class MiniMessageInlayController {
 
             bgtTracker
         }.finishOnUiThread(ApplicationManager.getApplication().defaultModalityState) { tracker ->
+            editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+                .filter { it.renderer is MiniMessageRenderer }
+                .forEach { it.dispose() }
+
             tracker.successful.forEach { updateInlineStringLiteral(editor, it.first, it.second) }
             tracker.failed.forEach { removeInlineInlay(editor, it) }
             tracker.runOnEDT.forEach { it.invoke() }
@@ -424,6 +454,24 @@ class MiniMessageInlayController {
         return shouldShowInlineInlay(element, text)
     }
 
+    fun removeInlayAndFold(editor: Editor, offset: Int) {
+        val inlays = editor.inlayModel.getInlineElementsInRange(offset - 1, offset + 1)
+
+        for (inlay in inlays) {
+            if(inlay.isOurs()) {
+                removeInlayAndFold(editor, inlay)
+            }
+        }
+    }
+
+    fun removeInlayAndFold(editor: Editor, inlay: Inlay<*>) {
+        val offset = inlay.offset
+        inlay.dispose()
+        ApplicationManager.getApplication().invokeLater {
+            uncollapseOurOnly(editor, offset)
+        }
+    }
+
     private fun shouldShowInlineInlay(element: PsiElement, text: String): Boolean {
         if(text.isBlank()) return false //Don't collapse "" so that it shows up
         return true
@@ -441,12 +489,12 @@ class MiniMessageInlayController {
     data class BGTInlayTracker(val successful: ArrayList<Pair<String, PsiElement>> = arrayListOf(),
                                val failed: ArrayList<PsiElement> = arrayListOf(),
                                val runOnEDT: ArrayList<() -> Unit> = arrayListOf()) {
+
         fun clear() {
             successful.clear()
             failed.clear()
             runOnEDT.clear()
         }
-
         fun runOnEDT(run: () -> Unit) {
             runOnEDT.add(run)
         }

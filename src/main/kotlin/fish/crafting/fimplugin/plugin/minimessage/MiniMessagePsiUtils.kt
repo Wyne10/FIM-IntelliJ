@@ -85,7 +85,7 @@ fun PsiElement.getParentLiteral(): PsiElement? {
     return PsiTreeUtil.getParentOfType(this, clazz, false)
 }
 
-fun PsiFile.visitExpressions(run: (PsiElement) -> Unit) {
+fun PsiElement.visitExpressions(run: (PsiElement) -> Unit) {
     if(language.isJava) {
         accept(object : JavaRecursiveElementVisitor() {
             override fun visitLiteralExpression(expression: PsiLiteralExpression) {

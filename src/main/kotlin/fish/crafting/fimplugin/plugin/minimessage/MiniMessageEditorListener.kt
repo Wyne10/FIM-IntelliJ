@@ -18,6 +18,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.util.concurrency.AppExecutorUtil
 import fish.crafting.fimplugin.plugin.listener.PluginDisposable
 import fish.crafting.fimplugin.plugin.util.DataKeys

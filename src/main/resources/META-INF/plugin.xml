@@ -130,5 +130,13 @@
                 popup="true">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
+
+        <action id="fim.remove_minimessage_render"
+                                 class="fish.crafting.fimplugin.plugin.action.inlay.RemoveInlayAction"
+                                 text="Remove Rendered MC Text"
+                                 description="Remove the rendered text"
+                                 popup="true">
+        <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </action>
     </actions>
 </idea-plugin>
