@@ -12,25 +12,50 @@
 
         <h2>Installation</h2>
 
-        <p>To use FIM, you must also download our Minecraft Mod.</p>
+        <p>To use certain features of FIM, you must also download our Minecraft Mod. Below, you can read which features require the mod and which do not.</p>
         <p>FIM runs on <a href="https://fabricmc.net/">Fabric</a>, and is built to support <b>latest</b> versions of Minecraft only.</p>
         <p>Download the Fabric Mod from our repository's releases or from <a href="https://modrinth.com/mod/fish-integrated-minecraft">Modrinth</a>. </p>
+
+        <h3>No Mod required features</h3>
+        <ul>
+            <li>Automatic Minecraft Text Formatting</li>
+                    <ul>
+            <li>Allows you to select methods/classes in <b>Java</b> & <b>Kotlin</b>, to show Formatted Minecraft text</li>
+            <li>Automatically shows formatted text in <b>JSON</b> & <b>YAML</b></li>
+            <li>Works with <b>MiniMessage (&#60;red>)</b> & <b>Legacy (&amp;c)</b> formatting</li>
+        </ul>
+        </ul>
+
+        <h3>Mod-enabled features</h3>
+        <ul>
+            <li>Fast Vector/Location/BoundingBox accessing & editing</li>
+            <li>Shortcut for quick swapping between IntelliJ & Minecraft</li>
+        </ul>
 
         <h2>Bugs & Suggestions</h2>
 
         <p>To report bugs or give suggestions, join us at our <a href="https://discord.crafting.fish">Discord Server</a>!</p>
-
-        <h2>Main Features</h2>
-
-        <li>Fast Vector/Location accessing & editing</li>
-        <li>Shortcut for quick swapping between IntelliJ & Minecraft</li>
-        </ul>]]>
+]]>
     </description>
 
     <change-notes><![CDATA[
+      <h2>New Features</h2>
       <ul>
-        <li>Added support for Minestom (Pos & Vec)</li>
-        <li>Added automatic language switching, based on latest open file</li>
+        <li>Added Minecraft Text Formatting</li>
+        <ul>
+            <li>Allows you to select methods/classes in <b>Java</b> & <b>Kotlin</b>, to show Formatted Minecraft text</li>
+            <li>Automatically shows formatted text in <b>JSON</b> & <b>YAML</b></li>
+            <li>Works with <b>MiniMessage (&#60;red>)</b> & <b>Legacy (&amp;c)</b> formatting</li>
+        </ul>
+
+        <br>
+        <li>Added support for editing <b>BoundingBox</b>es</li>
+      </ul>
+      <h2>Changes & Bugfixes</h2>
+      <ul>
+        <li>Editable values <i>(Vector, Location, BoundingBox)</i> no longer show an icon if Minecraft isn't connected</li>
+        <li>Added Rotate Location as a valid Location action</li>
+        <li>Improved performance regarding line gutters</li>
       </ul>
     ]]>
     </change-notes>

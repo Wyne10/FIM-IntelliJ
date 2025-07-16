@@ -4,6 +4,7 @@ import ai.grazie.utils.chainIf
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
+import fish.crafting.fimplugin.plugin.util.EditorUtil
 import io.ktor.util.date.getTimeMillis
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
@@ -28,6 +29,8 @@ class ConnectionServer internal constructor() {
                 ThreadFactoryBuilder().setNameFormat("Netty Server #%d").setDaemon(true).build()
             )
         }
+
+        private var lastRefreshedGutters = 0L
     }
 
     private val port = ConnectionConstants.CONNECTION_PORT
@@ -158,6 +161,19 @@ class ConnectionServer internal constructor() {
             pipeline.addLast("handler", connectionHandler)
 
             connections.add(connectionHandler)
+            if(connections.size == 1) { //Wow! First Connection!
+                val d = System.currentTimeMillis() - lastRefreshedGutters
+
+                val success = if(d > 15_000){ //15s
+                    EditorUtil.refreshGutters()
+                }else{
+                    false
+                }
+
+                if(success){
+                    lastRefreshedGutters = System.currentTimeMillis()
+                }
+            }
         }
     }
     fun hasInstance() = !connections.isEmpty()
