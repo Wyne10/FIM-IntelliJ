@@ -4,6 +4,7 @@ import com.intellij.ui.ColorHexUtil
 import fish.crafting.fimplugin.plugin.minimessage.parser.CommonTagStacks
 import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
+import fish.crafting.fimplugin.plugin.minimessage.toHexOrNull
 import java.awt.Color
 
 object ColorTagResolver : TagResolver(CommonTagStacks.COLOR) {
@@ -47,7 +48,7 @@ object ColorTagResolver : TagResolver(CommonTagStacks.COLOR) {
         if(tag.size == 1 && color == "color") return true //</color>
 
         if(color.startsWith("#")) {
-            return ColorHexUtil.fromHexOrNull(color) != null
+            return color.toHexOrNull() != null
         }else{
             return colorMap.containsKey(color)
         }
@@ -55,11 +56,7 @@ object ColorTagResolver : TagResolver(CommonTagStacks.COLOR) {
 
     fun resolveColor(colorStr: String): Color? {
         return if(colorStr.startsWith("#")){
-            try{
-                ColorHexUtil.fromHexOrNull(colorStr)
-            }catch (ignored: Exception) {
-                null
-            }
+            colorStr.toHexOrNull()
         }else{
             colorMap[colorStr]
         }

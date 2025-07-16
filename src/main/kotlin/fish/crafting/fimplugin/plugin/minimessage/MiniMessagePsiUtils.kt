@@ -17,6 +17,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.ui.ColorHexUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import fish.crafting.fimplugin.plugin.util.javakotlin.isJava
 import fish.crafting.fimplugin.plugin.util.javakotlin.isJson
@@ -36,6 +37,7 @@ import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.yaml.psi.YAMLQuotedText
 import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor
+import java.awt.Color
 
 fun PsiElement.checkMCFormatBGT(controller: MiniMessageInlayController): Boolean {
     if(DumbService.isDumb(project)) return false
@@ -180,4 +182,12 @@ fun PsiElement.shouldFormatMCText(): Boolean {
 
     val runtimeContainingClass = getRuntimeContainingClass() ?: return false
     return TextFormatRegistryService.instance.isClassValid(runtimeContainingClass)
+}
+
+fun String.toHexOrNull(): Color? {
+    try {
+        val hex = ColorHexUtil.fromHexOrNull(this)
+        return hex
+    }catch (ignored: Exception) {}
+    return null
 }

@@ -5,6 +5,7 @@ import com.intellij.ui.ColorHexUtil
 import fish.crafting.fimplugin.plugin.minimessage.parser.TagContext
 import fish.crafting.fimplugin.plugin.minimessage.parser.TextStyling
 import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.ColorTagResolver.colorMap
+import fish.crafting.fimplugin.plugin.minimessage.toHexOrNull
 
 object ShadowColorTagResolver : TagResolver() {
 
@@ -23,7 +24,7 @@ object ShadowColorTagResolver : TagResolver() {
         }
 
         var color = if(colorStr.startsWith("#")){
-            ColorHexUtil.fromHexOrNull(colorStr)
+            colorStr.toHexOrNull()
         }else{
             colorMap[colorStr]
         }
@@ -45,7 +46,7 @@ object ShadowColorTagResolver : TagResolver() {
         val color = tag.slices[1]
 
         if(color.startsWith("#")) {
-            if(ColorHexUtil.fromHexOrNull(color) == null) return false
+            if(color.toHexOrNull() == null) return false
         }else{
             if(!colorMap.containsKey(color)) return false
         }

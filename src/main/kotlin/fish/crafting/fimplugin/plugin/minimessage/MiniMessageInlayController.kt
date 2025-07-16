@@ -1,10 +1,12 @@
 package fish.crafting.fimplugin.plugin.minimessage
 
 import ai.grazie.utils.attributes.value
+import com.github.weisj.jsvg.bg
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
@@ -163,7 +165,7 @@ class MiniMessageInlayController {
         }
     }
 
-    fun blockInlay(editor: Editor, expression: PsiElement, text: String){
+    fun blockInlay(editor: Editor, expression: PsiElement, text: String, bgtTracker: BGTInlayTracker? = null){
         if(blockInlay != null){ //We don't need to check shouldOnlyRenderIfValid(), because if the user had at one point in this block inlay had tags, it should just stay
             if(matchesCached(expression)){ //The current inlay is correct, just update text.
                 val renderer = blockInlay!!.renderer as MiniMessageRenderer
@@ -186,7 +188,7 @@ class MiniMessageInlayController {
         val oldFocused = getAndReplace(expression)
         blockInlay?.dispose()
 
-        removeInlineInlay(editor, expression)
+        removeInlineInlay(editor, expression, bgtTracker = bgtTracker)
 
         var appliedRenderer: MiniMessageRenderer? = null
         if(expression.shouldOnlyRenderIfValid()){
@@ -252,12 +254,14 @@ class MiniMessageInlayController {
         }
     }
 
-    fun removeInlineInlay(editor: Editor, expression: PsiElement, uncollapse: Boolean = true) {
+    fun removeInlineInlay(editor: Editor, expression: PsiElement, uncollapse: Boolean = true, bgtTracker: BGTInlayTracker? = null) {
         val startOffset = expression.startOffset
         val endOffset = expression.endOffset
 
         if(uncollapse){
-            uncollapse(editor, expression)
+            onEDTorNow(bgtTracker) {
+                uncollapse(editor, expression)
+            }
         }
 
         editor.inlayModel.getInlineElementsInRange(startOffset, endOffset)
@@ -380,6 +384,7 @@ class MiniMessageInlayController {
         }.finishOnUiThread(ApplicationManager.getApplication().defaultModalityState) { tracker ->
             tracker.successful.forEach { updateInlineStringLiteral(editor, it.first, it.second) }
             tracker.failed.forEach { removeInlineInlay(editor, it) }
+            tracker.runOnEDT.forEach { it.invoke() }
 
             tracker.clear()
         }.submit(AppExecutorUtil.getAppExecutorService())
@@ -393,7 +398,7 @@ class MiniMessageInlayController {
         if(value !is String) return
 
         if(checkBlockInline && matchesCached(expression)) {
-            blockInlay(editor, expression, value)
+            blockInlay(editor, expression, value, bgtTracker)
             return
         }
 
@@ -434,10 +439,21 @@ class MiniMessageInlayController {
     }
 
     data class BGTInlayTracker(val successful: ArrayList<Pair<String, PsiElement>> = arrayListOf(),
-                               val failed: ArrayList<PsiElement> = arrayListOf()) {
+                               val failed: ArrayList<PsiElement> = arrayListOf(),
+                               val runOnEDT: ArrayList<() -> Unit> = arrayListOf()) {
         fun clear() {
             successful.clear()
             failed.clear()
+            runOnEDT.clear()
         }
+
+        fun runOnEDT(run: () -> Unit) {
+            runOnEDT.add(run)
+        }
+    }
+
+    private fun onEDTorNow(bgtTracker: BGTInlayTracker?, run: () -> Unit){
+        if(bgtTracker == null) run.invoke()
+        else bgtTracker.runOnEDT(run)
     }
 }

@@ -19,6 +19,7 @@ class MinecraftHandlerInstance(val channel: Channel) : SimpleChannelInboundHandl
     val createdAt = getTimeMillis()
 
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: ByteBuf?) {
+        println("Read!")
         if(ctx == null || msg == null) return
 
         PacketManager.handleReceivedPacket(this, msg)

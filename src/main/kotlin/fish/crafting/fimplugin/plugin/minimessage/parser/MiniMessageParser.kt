@@ -5,12 +5,12 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.TextTagResolve
 import java.util.concurrent.atomic.AtomicBoolean
 
 object MiniMessageParser {
-    fun parseOrLegacy(text: String, hadAnyFormat: AtomicBoolean? = null): ArrayList<TextComponent> {
+    fun parseOrLegacy(text: String, hadAnyFormat: AtomicBoolean = AtomicBoolean()): ArrayList<TextComponent> {
         if(text.contains('<') && text.contains('>')) {
             val hadTags = AtomicBoolean(false)
             val parsed = parseMiniMessage(text, hadTags)
             if(hadTags.get()) {
-                hadAnyFormat?.set(true)
+                hadAnyFormat.set(true)
                 return parsed
             }
         }
@@ -18,7 +18,7 @@ object MiniMessageParser {
         return LegacyFormatParser.parse(text, hadTags = hadAnyFormat)
     }
 
-    fun parseMiniMessage(message: String, hadTags: AtomicBoolean? = null): ArrayList<TextComponent> {
+    fun parseMiniMessage(message: String, hadTags: AtomicBoolean = AtomicBoolean()): ArrayList<TextComponent> {
         TagResolvers.flushAll()
 
         var text = message
@@ -96,7 +96,7 @@ object MiniMessageParser {
                         if(newStyling != null){
                             //Okay we passed all checks
 
-                            hadTags?.set(true)
+                            hadTags.set(true)
 
                             if(textStart != -1){ //Had text
                                 addOutput(text.substring(textStart, openIndex), activeStyling)
@@ -124,6 +124,12 @@ object MiniMessageParser {
 
         if(textStart != -1){ //Had text
             addOutput(text.substring(textStart), activeStyling)
+        }
+
+        //e.g. for "<red>", there is no text but tags.
+        //still, add an empty text so the renderer knows to render the blank spot
+        if(output.isEmpty() && hadTags.get()) {
+            addOutput("", activeStyling)
         }
 
         TagResolvers.flushAll()

@@ -1,6 +1,7 @@
 package fish.crafting.fimplugin.plugin.minimessage.parser
 
 import com.intellij.ui.ColorHexUtil
+import fish.crafting.fimplugin.plugin.minimessage.toHexOrNull
 import org.jetbrains.jewel.ui.component.Text
 import java.awt.Color
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,7 +31,7 @@ object LegacyFormatParser {
     )
 
     //this sucks
-    fun parse(text: String, triggerCharacter: Char = '&', hadTags: AtomicBoolean? = null): ArrayList<TextComponent> {
+    fun parse(text: String, triggerCharacter: Char = '&', hadTags: AtomicBoolean = AtomicBoolean()): ArrayList<TextComponent> {
         if(!text.contains(triggerCharacter)) {
             return arrayListOf(TextComponent(text, TextStyling()))
         }
@@ -53,7 +54,7 @@ object LegacyFormatParser {
         fun apply(symbol: String) {
             var color: Color?
             if(symbol.length > 1) { //hex
-                color = ColorHexUtil.fromHexOrNull(symbol)
+                color = symbol.toHexOrNull()
             }else{
                 color = colorMap[symbol]
             }
@@ -78,7 +79,7 @@ object LegacyFormatParser {
                 }
             }
 
-            if(valid) hadTags?.set(true)
+            if(valid) hadTags.set(true)
 
             //i is currently at the symbol position
             //e.g. &0
@@ -106,11 +107,7 @@ object LegacyFormatParser {
                 if(isHexReached){
                     hexString += ch
                     if(hexString.length == 6) {
-                        val hex = try {
-                            ColorHexUtil.fromHexOrNull("#$hexString")
-                        }catch (ignored: Exception) {
-                            null
-                        }
+                        val hex = "#$hexString".toHexOrNull()
 
                         if(hex != null){
                             apply("#$hexString")
@@ -132,6 +129,10 @@ object LegacyFormatParser {
 
         if(textStart < text.length) { //Last text hasn't been parsed
             output.add(TextComponent(text.substring(textStart), currentStyling))
+        }
+
+        if(output.isEmpty() && hadTags.get()){
+            output.add(TextComponent("", currentStyling))
         }
 
         return output

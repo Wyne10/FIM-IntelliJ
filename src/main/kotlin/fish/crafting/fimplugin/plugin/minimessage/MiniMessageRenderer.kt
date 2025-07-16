@@ -12,15 +12,19 @@ import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.GradientTagRes
 import fish.crafting.fimplugin.plugin.minimessage.parser.resolver.RainbowTagResolver
 import fish.crafting.fimplugin.plugin.util.ObfuscationUtil
 import java.awt.*
+import kotlin.math.max
+import kotlin.math.min
 
 class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                           private var text: String,
                           private var width: Int = 1,
                           private var renderIndex: Int = 0,
-                          private var attachedTimer: Boolean = false): EditorCustomElementRenderer {
+                          private var attachedTimer: Boolean = false,
+                          private var renderBG: Boolean = false): EditorCustomElementRenderer {
 
     constructor(text: String) : this(MiniMessageParser.parseOrLegacy(text), text)
 
+    private var lastColor: Color? = null
     private var isObfuscated: Boolean? = null
     fun hasObfuscation(): Boolean {
         if(isObfuscated == null) {
@@ -61,7 +65,8 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
         val g2 = g as Graphics2D
         val editor = inlay.editor
 
-        var width = 0;
+        var blank = true
+        var width = 0
         var x = targetRegion.x
         val y = targetRegion.y + editor.ascent
 
@@ -69,6 +74,7 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
         g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
 
+        var styledFont: Font? = null
         for (component in components) {
             val baseFont = if (component.styling.bold) {
                 MinecraftFont.bold
@@ -83,7 +89,7 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                 text = ObfuscationUtil.obfuscate(g, metrics, baseFont, text)
             }
 
-            val styledFont = applyStylingToFont(inlay.editor, baseFont, component.styling)
+            styledFont = applyStylingToFont(inlay.editor, baseFont, component.styling)
             g2.font = styledFont
 
             // Drawing Text
@@ -103,14 +109,37 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                 else -> 0
             }
 
+            if(blank) blank = text.isBlank()
+
             x += addedWidth
             width += addedWidth
 
         }
 
         val updateWidth = this.width != width
+
+        val newRenderBG = width == 0 || blank
+        val updateBG = renderBG != newRenderBG
+        renderBG = newRenderBG
+
+        if(renderBG){
+            if(styledFont == null) styledFont = MinecraftFont.font.deriveFont(editor.colorsScheme.editorFontSize + 3f)
+            val height = g2.getFontMetrics(styledFont).ascent
+            if(width == 0) width = height
+
+            if(!updateBG){ //Was supposed to render bg, and that didn't change
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+
+                val arc = height / 2
+                g2.color = lastColor ?: Color(255, 0, 0, 50)
+                g2.fillRoundRect(targetRegion.x, (y - height * 0.8).toInt(), this.width, height, arc, arc)
+            }
+        }
+
         this.width = width
-        if(updateWidth) inlay.update()
+        if(updateWidth || updateBG) inlay.update()
     }
 
     //Yes I know this is terrible
@@ -141,6 +170,7 @@ class MiniMessageRenderer(private val components: ArrayList<TextComponent>,
                                  x: Int, y: Int,
                                  component: TextComponent): Int {
         val color = colorElement.color
+        lastColor = Color(color.red, color.green, color.blue, 50)
         drawText(g2, x + 2, y + 2, text, component.styling.getShadow(color), component.styling)
         return drawText(g2, x, y, text, color, component.styling)
     }
